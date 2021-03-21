@@ -1,0 +1,31 @@
+{
+  "name": "riconijeboer/laravel-api-swagger",
+  "description": "This package aims to export your endpoints to Swagger YAML or JSON files.",
+  "type": "library",
+  "license": "MIT",
+  "require": {
+    "php": ">=7.4",
+    "ext-json": "*",
+    "soapbox/laravel-formatter": "2.x",
+    "riconijeboer/laravel-api-reader": "dev-master",
+    "spatie/laravel-package-tools": "^1.6"
+  },
+  "autoload": {
+    "psr-4": {
+      "Rico\\Swagger\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Rico\\Swagger\\ServiceProvider"
+      ]
+    }
+  },
+  "authors": [
+    {
+      "name": "Rico Nijeboer",
+      "email": "rico@riconijeboer.nl"
+    }
+  ]
+}
