@@ -1,5 +1,5 @@
 {
-  "name": "riconijeboer/laravel-api-swagger",
+  "name": "riconijeboer/laravel-to-swagger",
   "description": "This package aims to export your endpoints to Swagger YAML or JSON files.",
   "type": "library",
   "license": "MIT",
