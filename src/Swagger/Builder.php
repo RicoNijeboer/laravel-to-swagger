@@ -23,6 +23,7 @@ class Builder
         'description' => ' ',
     ];
 
+    /** @var Server[] */
     protected array $servers = [];
 
     protected array $paths = [];
@@ -91,20 +92,12 @@ class Builder
     /**
      * Adds a server to the Swagger documentation.
      *
-     * @param string      $url
-     * @param string|null $description
+     * @param Server $server
      *
      * @return $this
      */
-    public function addServer(string $url, ?string $description = null): self
+    public function addServer(Server $server): self
     {
-        $server = ['url' => $url];
-
-        if ( ! empty($description))
-        {
-            $server['description'] = $description;
-        }
-
         $this->servers[] = $server;
 
         return $this;
@@ -120,10 +113,7 @@ class Builder
      */
     public function addPath(string $uri, array $data): self
     {
-        if ( ! Str::startsWith($uri, '/'))
-        {
-            $uri = '/' . $uri;
-        }
+        $uri = Str::start($uri, '/');
 
         if ( ! array_key_exists($uri, $this->paths))
         {
@@ -149,7 +139,7 @@ class Builder
     {
         return array_filter([
             'info'    => $this->info,
-            'servers' => $this->servers,
+            'servers' => array_map(fn(Server $server) => $server->toArray(), $this->servers),
             'openapi' => $this->openapi,
             'paths'   => array_map(fn(Collection $endpoints) => $endpoints->map->toArray()->all(), $this->paths),
         ], fn($item) => ! empty($item));

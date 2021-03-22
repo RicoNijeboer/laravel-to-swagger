@@ -3,17 +3,16 @@
 namespace Rico\Swagger\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Routing\Route;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Routing\Router;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use Rico\Reader\Endpoints\EndpointData;
-use Rico\Reader\Endpoints\EndpointReader;
 use Rico\Reader\Exceptions\EndpointDoesntExistException;
-use Rico\Swagger\Swagger\Builder;
+use Rico\Swagger\Actions\RouterToSwaggerAction;
+use Rico\Swagger\Exceptions\UnsupportedSwaggerExportTypeException;
 use Rico\Swagger\Swagger\Formatter\Formatter;
+use Rico\Swagger\Swagger\Server;
 
 /**
  * Class ExportSwaggerCommand
@@ -32,31 +31,31 @@ class ExportSwaggerCommand extends Command
                             {--s|server=* : Servers to add}';
 
     private string $outputPath;
+
     private bool $yaml = true;
 
     /**
-     * @param Router         $router
-     * @param EndpointReader $endpointReader
+     * @param Router                $router
+     * @param RouterToSwaggerAction $action
      *
      * @throws EndpointDoesntExistException
+     * @throws BindingResolutionException
+     * @throws UnsupportedSwaggerExportTypeException
      */
-    public function handle(Router $router)
+    public function handle(Router $router, RouterToSwaggerAction $action)
     {
         $this->setOutputPath();
 
-        $swagger = Builder::new($this->option('title'), $this->option('description'), $this->option('set-version'));
+        $fileContent = $action->convert(
+            $router,
+            $this->option('title'),
+            $this->option('description'),
+            $this->option('set-version'),
+            array_map(fn(string $url) => new Server($url), $this->getServers()),
+            $this->yaml ? RouterToSwaggerAction::TYPE_YAML : RouterToSwaggerAction::TYPE_JSON,
+        );
 
-        $this->getRoutes($router)
-             ->each(function (Route $route) use ($swagger) {
-                 $swagger->addPath(
-                     $route->uri(),
-                     EndpointReader::readRoute($route)->all()
-                 );
-             });
-
-        $this->getServers()->each(fn(string $server) => $swagger->addServer($server));
-
-        File::put($this->outputPath, $this->yaml ? $swagger->toYaml() : $swagger->toJson());
+        File::put($this->outputPath, $fileContent);
     }
 
     /**
@@ -67,7 +66,8 @@ class ExportSwaggerCommand extends Command
         /** @var string $out */
         $out = $this->option('out');
 
-        if (Str::endsWith($out, '.json')) {
+        if (Str::endsWith($out, '.json'))
+        {
             $this->yaml = false;
         }
 
@@ -76,20 +76,10 @@ class ExportSwaggerCommand extends Command
     }
 
     /**
-     * @param Router $router
-     *
-     * @return Collection
+     * @return string[]
      */
-    protected function getRoutes(Router $router): Collection
+    protected function getServers(): array
     {
-        return collect($router->getRoutes()->getRoutes());
-    }
-
-    /**
-     * @return Collection
-     */
-    protected function getServers(): Collection
-    {
-        return collect($this->option('server'));
+        return $this->option('server');
     }
 }

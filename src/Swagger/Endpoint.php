@@ -4,7 +4,10 @@ namespace Rico\Swagger\Swagger;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Rico\Reader\Endpoints\DataType;
+use Rico\Reader\Endpoints\DataType as ReaderDataType;
 use Rico\Reader\Endpoints\EndpointData;
+use Rico\Reader\Exceptions\PropertyIsNotInRulesException;
 
 /**
  * Class Endpoint
@@ -13,6 +16,18 @@ use Rico\Reader\Endpoints\EndpointData;
  */
 class Endpoint
 {
+
+    protected const DATA_TYPES = [
+        ReaderDataType::STRING             => 'string',
+        ReaderDataType::INT                => 'integer',
+        ReaderDataType::FLOAT              => 'float',
+        ReaderDataType::DATETIME           => 'string',
+        ReaderDataType::FORMATTED_DATETIME => 'string',
+        ReaderDataType::BOOLEAN            => 'boolean',
+        ReaderDataType::ARRAY              => 'array',
+        ReaderDataType::OBJECT             => 'object',
+        ReaderDataType::DOUBLE             => 'double',
+    ];
 
     private EndpointData $originalData;
 
@@ -90,24 +105,89 @@ class Endpoint
      * @param EndpointData $data
      *
      * @return void
+     * @throws PropertyIsNotInRulesException
      */
     protected function loadProperties(EndpointData $data): void
     {
         $item = [];
         $data->properties()
              ->sortKeys()
-             ->each(function ($_, $prop) use (&$item) {
-                 if (Str::contains($prop, '*'))
+             ->each(function ($_, $prop) use ($data, &$item) {
+                 $extraInfo = [
+                     'nullable' => $data->isNullable($prop),
+                 ];
+
+                 if ($data->hasRule($prop, 'min:*'))
+                 {
+                     [, $extraInfo['min']] = explode(':', $data->getRule($prop, 'min:*'));
+                 }
+
+                 if ($data->hasRule($prop, 'max:*'))
+                 {
+                     [, $extraInfo['max']] = explode(':', $data->getRule($prop, 'max:*'));
+                 }
+
+                 if ($data->isEmail($prop))
+                 {
+                     $extraInfo['isEmail'] = true;
+                 }
+
+                 try
+                 {
+                     $type = $this->originalData->dataType($prop);
+                 }
+                 catch (PropertyIsNotInRulesException $e)
+                 {
+                     $type = null;
+                 }
+
+                 if (Str::contains($prop, '.*.'))
                  {
                      [$parent] = explode('.*.', $prop, 2);
 
-                     Arr::set($item, $parent . '.__type', 'array');
-                     Arr::set($item, str_replace('.*.', '.', $prop), []);
+                     Arr::set(
+                         $item,
+                         $parent . '.__type',
+                         ReaderDataType::ARRAY
+                     );
+
+                     Arr::set(
+                         $item,
+                         str_replace('.*.', '.', $prop),
+                         [
+                             '__type'  => $type,
+                             '__extra' => $extraInfo,
+                         ]
+                     );
+
+                     return;
+                 }
+                 elseif (Str::endsWith($prop, '.*'))
+                 {
+                     $parent = substr($prop, 0, strlen($prop) - 2);
+
+                     Arr::set(
+                         $item,
+                         $parent . '.__type',
+                         ReaderDataType::ARRAY
+                     );
+
+                     Arr::set(
+                         $item,
+                         $parent . '.0',
+                         [
+                             '__type'  => $type,
+                             '__extra' => $extraInfo,
+                         ]
+                     );
 
                      return;
                  }
 
-                 Arr::set($item, $prop, []);
+                 Arr::set($item, $prop, [
+                     '__type'  => $type,
+                     '__extra' => $extraInfo,
+                 ]);
              });
 
         $this->properties = collect($item)
@@ -125,39 +205,47 @@ class Endpoint
      */
     protected function loadProperty(array $value, string $property): array
     {
-        if (count($value) > 0)
+        $type = $value['__type'] ?? ReaderDataType::OBJECT;
+        unset($value['__type']);
+        $extraInfo = $value['__extra'] ?? [];
+        unset($value['__extra']);
+
+        $swaggerInfo = Property::makeData(static::DATA_TYPES[$type], $value, $extraInfo);
+
+        if ($type === DataType::OBJECT)
         {
-            if ($value['__type'] ?? '' === 'array')
+            $swaggerInfo['properties'] = collect($value)
+                ->mapWithKeys(fn(array $value, string $property) => $this->loadProperty($value, $property))
+                ->all();
+        }
+        elseif ($type === DataType::ARRAY)
+        {
+            $firstPropertyKey = array_keys($value)[0];
+
+            if (is_int($firstPropertyKey) && count($value) === 1)
             {
-                unset($value['__type']);
+                $firstProperty = $value[$firstPropertyKey];
 
-                return [
-                    $property => [
-                        'type'  => 'array',
-                        'items' => [
-                            'type'       => 'object',
-                            'properties' => collect($value)
-                                ->mapWithKeys(fn(array $value, string $property) => $this->loadProperty($value, $property))
-                                ->all(),
-                        ],
-                    ],
-                ];
+                $firstPropertyType = $firstProperty['__type'] ?? ReaderDataType::OBJECT;
+                unset($firstProperty['__type']);
+                $firstPropertyExtraInfo = $firstProperty['__extra'] ?? [];
+                unset($firstProperty['__extra']);
+
+                $swaggerInfo['items'] = Property::makeData(static::DATA_TYPES[$firstPropertyType], $firstProperty, $firstPropertyExtraInfo);
             }
-
-            return [
-                $property => [
+            else
+            {
+                $swaggerInfo['items'] = [
                     'type'       => 'object',
                     'properties' => collect($value)
                         ->mapWithKeys(fn(array $value, string $property) => $this->loadProperty($value, $property))
                         ->all(),
-                ],
-            ];
+                ];
+            }
         }
 
         return [
-            $property => [
-                'type' => 'string',
-            ],
+            $property => $swaggerInfo,
         ];
     }
 
@@ -198,6 +286,6 @@ class Endpoint
      */
     protected function loadRequiredProperties(EndpointData $data)
     {
-        $this->required = $data->required()->toArray();
+        $this->required = $data->required();
     }
 }
