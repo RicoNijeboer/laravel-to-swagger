@@ -24,10 +24,10 @@ class ExportSwaggerCommand extends Command
 
     /** @var string */
     protected $signature = 'api:swagger
-                            {--T|title=}
-                            {--D|description=}
-                            {--set-version=}
-                            {--O|out=swagger.yml}
+                            {--T|title= : Add a title to your Swagger config}
+                            {--D|description= : Add a description to your Swagger config}
+                            {--set-version= : Sets the version off the Swagger config}
+                            {--O|out=swagger.yml : The output path, can be both relative and the full path}
                             {--s|server=* : Servers to add}';
 
     private string $outputPath;

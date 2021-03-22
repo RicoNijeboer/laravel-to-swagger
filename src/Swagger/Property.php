@@ -29,6 +29,7 @@ class Property
         if (array_key_exists('nullable', $extraInfo) && $extraInfo['nullable'] === true)
         {
             $swaggerInfo['nullable'] = true;
+            $swaggerInfo['example'] = null;
         }
 
         return $swaggerInfo;
