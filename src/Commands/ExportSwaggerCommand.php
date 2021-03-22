@@ -5,7 +5,6 @@ namespace Rico\Swagger\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Routing\Router;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Rico\Reader\Exceptions\EndpointDoesntExistException;
@@ -51,7 +50,7 @@ class ExportSwaggerCommand extends Command
             $this->option('title'),
             $this->option('description'),
             $this->option('set-version'),
-            array_map(fn(string $url) => new Server($url), $this->getServers()),
+            $this->getServers(),
             $this->yaml ? RouterToSwaggerAction::TYPE_YAML : RouterToSwaggerAction::TYPE_JSON,
         );
 
@@ -76,10 +75,17 @@ class ExportSwaggerCommand extends Command
     }
 
     /**
-     * @return string[]
+     * @return Server[]
      */
     protected function getServers(): array
     {
-        return $this->option('server');
+        return array_map(
+            function (string $server) {
+                $serverInfo = explode(' ', $server . ' ', 2);
+
+                return new Server($serverInfo[0], $serverInfo[1] ?? null);
+            },
+            $this->option('server')
+        );
     }
 }
