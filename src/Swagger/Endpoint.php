@@ -2,12 +2,12 @@
 
 namespace Rico\Swagger\Swagger;
 
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Rico\Reader\Endpoints\DataType;
 use Rico\Reader\Endpoints\DataType as ReaderDataType;
 use Rico\Reader\Endpoints\EndpointData;
 use Rico\Reader\Exceptions\PropertyIsNotInRulesException;
+use Rico\Swagger\Support\Arr;
 
 /**
  * Class Endpoint
@@ -37,6 +37,9 @@ class Endpoint
 
     private array $properties = [];
 
+    /** @var string[] */
+    private array $tags = [];
+
     public function __construct(EndpointData $data)
     {
         $this->loadFrom($data);
@@ -46,6 +49,7 @@ class Endpoint
      * @param EndpointData $data
      *
      * @return $this
+     * @throws PropertyIsNotInRulesException
      */
     public function loadFrom(EndpointData $data): self
     {
@@ -74,6 +78,11 @@ class Endpoint
             ],
         ];
 
+        if (count($this->tags) > 0)
+        {
+            $array['tags'] = array_map(fn(Tag $tag): string => $tag, $this->tags);
+        }
+
         if (count($this->parameters) > 0)
         {
             $array['parameters'] = $this->parameters;
@@ -99,6 +108,64 @@ class Endpoint
         }
 
         return $array;
+    }
+
+    /**
+     * Apply tags to the endpoint.
+     *
+     * @param Tag[] $tags
+     *
+     * @return $this
+     */
+    public function applyTags(array $tags): self
+    {
+        $this->tags = array_values(
+            array_filter($tags, fn(Tag $tag) => $tag->matches($this))
+        );
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function uri(): string
+    {
+        return Str::start($this->originalData->route()->uri(), '/');
+    }
+
+    /**
+     * @return string[]
+     */
+    public function middlewares(): array
+    {
+        return $this->originalData->route()->gatherMiddleware();
+    }
+
+    /**
+     * Returns the controller used by the endpoint.
+     * When the route uses a Closure it will return "Closure"
+     *
+     * @return string
+     */
+    public function controller(): string
+    {
+        [$controller] = $this->getAction();
+
+        return $controller;
+    }
+
+    /**
+     * Returns the controller used by the endpoint.
+     * When the route uses a Closure it will return "Closure"
+     *
+     * @return string|null
+     */
+    public function controllerMethod(): ?string
+    {
+        $action = $this->getAction();
+
+        return $action[1] ?? null;
     }
 
     /**
@@ -287,5 +354,18 @@ class Endpoint
     protected function loadRequiredProperties(EndpointData $data)
     {
         $this->required = $data->required();
+    }
+
+    /**
+     * Returns [controller, action] if it can.
+     * For routes with closures it returns ["Closure"].
+     *
+     * @return string[]
+     */
+    protected function getAction(): array
+    {
+        $route = $this->originalData->route();
+
+        return explode('@', $route->getActionName(), 2);
     }
 }

@@ -12,6 +12,7 @@ use Rico\Swagger\Actions\RouterToSwaggerAction;
 use Rico\Swagger\Exceptions\UnsupportedSwaggerExportTypeException;
 use Rico\Swagger\Swagger\Formatter\Formatter;
 use Rico\Swagger\Swagger\Server;
+use Rico\Swagger\Swagger\Tag;
 
 /**
  * Class ExportSwaggerCommand
@@ -27,7 +28,8 @@ class ExportSwaggerCommand extends Command
                             {--D|description= : Add a description to your Swagger config}
                             {--set-version= : Sets the version off the Swagger config}
                             {--O|out=swagger.yml : The output path, can be both relative and the full path}
-                            {--s|server=* : Servers to add}';
+                            {--s|server=* : Servers to add}
+                            {--t|tag=* : Tag a part of your endpoints using a specified syntax}';
 
     private string $outputPath;
 
@@ -51,6 +53,7 @@ class ExportSwaggerCommand extends Command
             $this->option('description'),
             $this->option('set-version'),
             $this->getServers(),
+            $this->getTags(),
             $this->yaml ? RouterToSwaggerAction::TYPE_YAML : RouterToSwaggerAction::TYPE_JSON,
         );
 
@@ -87,5 +90,58 @@ class ExportSwaggerCommand extends Command
             },
             $this->option('server')
         );
+    }
+
+    /**
+     * @return array
+     */
+    protected function getTags(): array
+    {
+        return array_map(function (string $tag): Tag {
+            $tag = str_replace(['%'], '*', $tag);
+            $filters = explode(';', $tag);
+
+            $tag = array_shift($filters);
+
+            return array_reduce(
+                $filters,
+                function (Tag $t, string $filter) {
+                    [$endpointFilters, $middlewareFilters, $controllerFilters] = $this->readTagFilter($filter);
+
+                    array_walk($endpointFilters, fn(string $f) => $t->addEndpointFilter(trim($f)));
+                    array_walk($middlewareFilters, fn(string $f) => $t->addMiddlewareFilter(trim($f)));
+                    array_walk($controllerFilters, fn(string $f) => $t->addControllerFilter(trim($f)));
+
+                    return $t;
+                },
+                Tag::new($tag),
+            );
+        }, $this->option('tag'));
+    }
+
+    /**
+     * Read the tag filter into endpoint and middleware filters.
+     *
+     * @param string $filters
+     *
+     * @return array
+     */
+    protected function readTagFilter(string $filters): array
+    {
+        preg_match_all(
+            '/(\se:([\w\/*\-%]*))|(\sm:([\w*%]*))|(\sc:([\w*%]*))/m',
+            $filters,
+            $matches
+        );
+
+        $endpointFilters = array_values(array_filter($matches[2], fn(string $filter) => ! empty($filter)));
+        $middlewareFilters = array_values(array_filter($matches[4], fn(string $filter) => ! empty($filter)));
+        $controllerFilters = array_values(array_filter($matches[6], fn(string $filter) => ! empty($filter)));
+
+        return [
+            $endpointFilters,
+            $middlewareFilters,
+            $controllerFilters,
+        ];
     }
 }

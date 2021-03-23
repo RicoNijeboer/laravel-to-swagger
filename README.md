@@ -33,6 +33,7 @@ php artisan api:swagger
     {--set-version= : Sets the version off the Swagger config}
     {--O|out=swagger.yml : The output path, can be both relative and the full path}
     {--s|server=* : Servers to add, provide the URLs}
+    {--t|tag=* : Tag a part of your endpoints using a specified syntax}
 ```
 
 ### Information
@@ -76,3 +77,75 @@ so after that you can keep adding more spaces.
 ```shell
 php artisan api:swagger --server='test.example.com Test environment' -s 'example.com Production'
 ```
+
+### Tag
+
+Grouping your requests in Swagger is done using tags. Using the command you can tag your endpoints using the filters
+below. Every filter can also be combined for more specific filters!
+
+### Syntax
+
+To tag your endpoints add a `--tag` or `-t` when calling the command. They take a value that is structured as follows;
+
+```text
+{Tag Name}; {filters}
+```
+
+### Tag Filters
+
+Currently we accept the following filter types all using the same syntax
+
+- Controllers (`c:...`)
+- Middlewares (`m:...`)
+- Endpoint / Path (`e:...`)
+
+Using 2 controller filters will apply the filter when either one of the filters is met. However if you provide one of
+each of the filter types all of the filters have to be met.
+
+#### Controller
+
+You can tag a request based on a controller by giving your tag-filter a `c:` prefix
+
+```shell
+# Tag endpoints that use a controller where the name starts with "Order" with "Orders"
+php artisan api:swagger --tag="Orders; c:Order*"
+
+# Tag endpoints that use a controller where the name contains "Order" with "Orders"
+php artisan api:swagger -t "Orders; c:*Order*"
+
+# Tag endpoints that use a controller where the name contains either "Order" or "Cart" with "Shopping"
+php artisan api:swagger -t "Shopping; c:*Order* c:*Cart*"
+```
+
+#### Middlewares
+
+You can tag a request based on a controller by giving your tag-filter a `m:` prefix
+
+```shell
+# Tag endpoints with "Api" when they use a middleware that either ends with "-api" or is equal to "api"
+php artisan api:swagger --tag="Api; m:*-api m:api"
+```
+
+#### Endpoint / Path
+
+You can tag a request based on a controller by giving your tag-filter a `e:` prefix
+
+```shell
+# Tag endpoints with "Orders" when they exist on a path that contains "order"
+php artisan api:swagger --tag="Orders; e:*order*"
+
+# Tag endpoints with "Shopping" when they exist on a path that contains either "product" or "order"
+php artisan api:swagger -t "Shopping; e:*product* e:*order*"
+```
+
+#### Combining
+
+As said before you can also combine the filters!
+
+```shell
+# Tag endpoints with "API Orders" when they exist on a path that contains "order" and they use the "api" middleware
+php artisan api:swagger --tag="API Orders; e:*order* m:api"
+```
+
+
+

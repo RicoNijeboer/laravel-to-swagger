@@ -28,23 +28,28 @@ class Builder
 
     protected array $paths = [];
 
+    /** @var Tag[] */
+    protected array $tags;
+
     /**
      * SwaggerBuilder constructor.
      *
      * @param string|null $title
      * @param string|null $description
      * @param string|null $version
+     * @param Tag[]|null  $tags
      */
-    public function __construct(?string $title = null, ?string $description = null, ?string $version = null)
+    public function __construct(?string $title = null, ?string $description = null, ?string $version = null, ?array $tags = [])
     {
         $this->title($title ?? ' ');
         $this->version($version ?? ' ');
         $this->description($description ?? ' ');
+        $this->tags($tags ?? []);
     }
 
-    public static function new(?string $title = null, ?string $description = null, ?string $version = null): self
+    public static function new(?string $title = null, ?string $description = null, ?string $version = null, ?array $tags = []): self
     {
-        return new static($title, $description, $version);
+        return new static($title, $description, $version, $tags);
     }
 
     /**
@@ -71,6 +76,20 @@ class Builder
     public function description(string $description): self
     {
         $this->info['description'] = $description;
+
+        return $this;
+    }
+
+    /**
+     * Set the description of the Swagger document.
+     *
+     * @param Tag[] $tags
+     *
+     * @return $this
+     */
+    public function tags(array $tags): self
+    {
+        $this->tags = $tags;
 
         return $this;
     }
@@ -137,11 +156,21 @@ class Builder
      */
     public function toArray(): array
     {
+        $paths = array_map(function (Collection $endpoints) {
+            return $endpoints
+                ->map(function (Endpoint $endpoint) {
+                    $endpoint->applyTags($this->tags);
+
+                    return $endpoint->toArray();
+                })
+                ->all();
+        }, $this->paths);
+
         return array_filter([
             'info'    => $this->info,
             'servers' => array_map(fn(Server $server) => $server->toArray(), $this->servers),
             'openapi' => $this->openapi,
-            'paths'   => array_map(fn(Collection $endpoints) => $endpoints->map->toArray()->all(), $this->paths),
+            'paths'   => $paths,
         ], fn($item) => ! empty($item));
     }
 

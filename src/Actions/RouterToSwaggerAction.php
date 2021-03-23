@@ -11,6 +11,7 @@ use Rico\Reader\Exceptions\EndpointDoesntExistException;
 use Rico\Swagger\Exceptions\UnsupportedSwaggerExportTypeException;
 use Rico\Swagger\Swagger\Builder;
 use Rico\Swagger\Swagger\Server;
+use Rico\Swagger\Swagger\Tag;
 use function array_walk;
 
 /**
@@ -36,6 +37,7 @@ class RouterToSwaggerAction
      * @param string|null $description
      * @param string|null $version
      * @param Server[]    $servers
+     * @param Tag[]       $tags
      * @param int         $type
      *
      * @return string
@@ -43,11 +45,11 @@ class RouterToSwaggerAction
      * @throws EndpointDoesntExistException
      * @throws UnsupportedSwaggerExportTypeException
      */
-    public function convert(Router $router, ?string $title = null, ?string $description = null, ?string $version = null, array $servers = [], int $type = self::TYPE_YAML): string
+    public function convert(Router $router, ?string $title = null, ?string $description = null, ?string $version = null, array $servers = [], array $tags = [], int $type = self::TYPE_YAML): string
     {
         $this->validateType($type);
         $this->router = $router;
-        $this->swagger = new Builder($title, $description, $version);
+        $this->swagger = Builder::new($title, $description, $version, $tags);
 
         $this->readRoutes();
         $this->addServers($servers);

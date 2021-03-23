@@ -7,7 +7,7 @@
     "php": ">=7.4",
     "ext-json": "*",
     "soapbox/laravel-formatter": "2.x",
-    "riconijeboer/laravel-endpoint-reader": "^1.0",
+    "riconijeboer/laravel-endpoint-reader": "^1.0|dev-master",
     "spatie/laravel-package-tools": "^1.6"
   },
   "autoload": {
