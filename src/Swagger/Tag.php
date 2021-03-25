@@ -2,8 +2,11 @@
 
 namespace Rico\Swagger\Swagger;
 
+use Illuminate\Routing\Route;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
-use Rico\Swagger\Support\Arr;
+use Rico\Swagger\Support\Filter;
+use Rico\Swagger\Support\RouteFilter;
 
 /**
  * Class Tag
@@ -12,14 +15,9 @@ use Rico\Swagger\Support\Arr;
  */
 class Tag
 {
-
     private string $tag;
-
-    private array $filters = [
-        'endpoints'  => [],
-        'middleware' => [],
-        'controller' => [],
-    ];
+    /** @var RouteFilter[] */
+    private array $filters = [];
 
     /**
      * Tag constructor.
@@ -42,60 +40,39 @@ class Tag
     }
 
     /**
-     * Adds an controller filter for the tag.
-     * (Example: "*Controller" would catch both all controllers and "Product*" would catch all controllers starting with "Product")
+     * Add a filter to the Tag.
      *
-     * @param string $controller
+     * @param RouteFilter $filter
      *
      * @return $this
      */
-    public function addControllerFilter(string $controller): self
+    public function addFilter(RouteFilter $filter): self
     {
-        $this->filters['controller'][] = $controller;
+        if (!$filter->isType([])) {
+        }
+
+        $this->filters[] = $filter;
 
         return $this;
     }
 
     /**
-     * Adds an endpoint filter for the tag.
-     * (Example: "/products*" would catch both "/products" and "/products/{product}")
+     * Check if the endpoint matches the given filters.
      *
-     * @param string $endpoint
-     *
-     * @return $this
-     */
-    public function addEndpointFilter(string $endpoint): self
-    {
-        $this->filters['endpoints'][] = $endpoint;
-
-        return $this;
-    }
-
-    /**
-     * Adds an middleware filter for the tag.
-     * (Example: "web*" would catch both "web" and "website")
-     *
-     * @param string $middleware
-     *
-     * @return $this
-     */
-    public function addMiddlewareFilter(string $middleware): self
-    {
-        $this->filters['middleware'][] = $middleware;
-
-        return $this;
-    }
-
-    /**
-     * @param Endpoint $endpoint
+     * @param Route $route
      *
      * @return bool
      */
-    public function matches(Endpoint $endpoint): bool
+    public function matches(Route $route): bool
     {
-        return $this->matchesEndpointFilter($endpoint)
-            && $this->matchesControllerFilter($endpoint)
-            && $this->matchesMiddlewareFilter($endpoint);
+        return collect($this->filters)
+            ->groupBy(fn (RouteFilter $filter) => $filter->getType())
+            ->every(function (Collection $filters) use ($route) {
+                /** @var RouteFilter $filter */
+                $filter = $filters->some;
+
+                return $filter->matchesRoute($route);
+            });
     }
 
     /**
@@ -107,47 +84,18 @@ class Tag
     }
 
     /**
-     * @param Endpoint $endpoint
+     * Get the filterable properties of an endpoint.
      *
-     * @return bool
-     */
-    protected function matchesEndpointFilter(Endpoint $endpoint): bool
-    {
-        if (empty($this->filters['endpoints']))
-        {
-            return true;
-        }
-
-        return Str::is($this->filters['endpoints'], $endpoint->uri());
-    }
-
-    /**
-     * @param Endpoint $endpoint
+     * @param Route $route
      *
-     * @return bool
+     * @return array
      */
-    protected function matchesControllerFilter(Endpoint $endpoint): bool
+    protected function getFilterable(Route $route): array
     {
-        if (empty($this->filters['controller']))
-        {
-            return true;
-        }
-
-        return Str::is($this->filters['controller'], $endpoint->controller());
-    }
-
-    /**
-     * @param Endpoint $endpoint
-     *
-     * @return bool
-     */
-    protected function matchesMiddlewareFilter(Endpoint $endpoint): bool
-    {
-        if (empty($this->filters['middleware']))
-        {
-            return true;
-        }
-
-        return Arr::some($endpoint->middlewares(), fn(string $middleware) => Str::is($this->filters['middleware'], $middleware));
+        return [
+            self::FILTER_TYPE_ENDPOINT   => [Str::start($route->uri(), '/')],
+            self::FILTER_TYPE_ACTION     => $route->getAction(),
+            self::FILTER_TYPE_MIDDLEWARE => $route->gatherMiddleware(),
+        ];
     }
 }

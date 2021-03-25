@@ -4,8 +4,8 @@ Export your routes to a basic Swagger config the properties of your request (and
 
 # Disclaimer
 
-While exporting a part of your code **will** be ran. I've made sure *no* should go to your database as I've overwritten
-the Laravel database connection resolver to always return a connection which throws an Exception I use to determine when
+When exporting, a part of your code **will** be executed. I've made sure *no* should go to your database as I've overwritten
+the Laravel database connection resolver to always return a connection which throws an Exception which is used to determine when
 to stop listening for validation errors.
 
 Because of this I **will** not and **do** not take responsibility for any issues resulting from an export created using
@@ -24,23 +24,59 @@ composer require riconijeboer/laravel-to-swagger
 
 # Commands
 
+## Check filters
+
+- Artisan Command: `api:check-filter`
+    - Arguments
+        - `filter`
+            - The filter you want to check.
+    - Options:
+        - `--route`
+            - Check if your filter would compile to a route.
+
+Because the [Filters](#filters) are not the easiest to understand we have you covered with the `check-filter` command.
+This command will check try to parse the provided filter and display them in a nice and neat array.
+
+Using the `--route` option you can check if your filter would have been valid if it were used as
+a [Route filter](#route-filters)
+
+### Example output
+
+```shell
+php artisan api:check-filter 'foo:*bar:baz* moo:cow'
+
+> +------+--------+
+> | Type | Filter |
+> +------+--------+
+> | foo  | *bar   |
+> | moo  | cow    |
+> +------+--------+
+```
+
 ## Export a Swagger config file
 
-```
-php artisan api:swagger
-    {--T|title= : Add a title to your Swagger config}
-    {--D|description= : Add a description to your Swagger config}
-    {--set-version= : Sets the version off the Swagger config}
-    {--O|out=swagger.yml : The output path, can be both relative and the full path}
-    {--s|server=* : Servers to add, provide the URLs}
-    {--t|tag=* : Tag a part of your endpoints using a specified syntax}
-```
+- Artisan Command: `api:swagger`
+- Options:
+    - [`--T|title=`](#information)
+        - Add a title to your Swagger config
+    - [`--D|description=`](#information)
+        - Add a description to your Swagger config
+    - [`--set-version=`](#information)
+        - Sets the version off the Swagger config
+    - [`--O|out=swagger.yml`](#changing-the-output-file)
+        - The output path, can be both relative and the full path
+    - [`--s|server=*`](#adding-servers-to-your-export)
+        - Servers to add, provide the URLs
+    - [`--t|tag=*`](#tagging-routes)
+        - Tag a part of your endpoints using a specified syntax
+    - [`--e|exclude=*`](#excluding-routes)
+        - Exclude a part of your endpoints using the filter syntax
 
 ### Information
 
 To add information like the `title`, `version` or a `description` to your Swagger config. You can provide the respective
-options. Sadly Laravel doesn't allow me to use `--version` to set the version (yet). So you'll have to
-use `--set-version`.
+options. Sadly Laravel doesn't allow me to use `--version` to set the version (
+yet). So you'll have to use `--set-version`.
 
 **Keep in mind that Swagger expects your version to be semantic, meaning that it requires you to make your version
 comply with that standard.**
@@ -50,7 +86,18 @@ php artisan api:swagger --title='Example.com Swagger'  --description='Example.co
 #php artisan api:swagger --T 'Example.com Swagger'  -D 'Example.com Swagger config description'
 ```
 
-### JSON export instead of YAML
+### Changing the output file
+
+You can change the output path of the Swagger config using the `--out` or `-O` option. It can receive both a relative
+and full path and defaults to `swagger.yml`. Meaning it would create the Swagger config in the current directory in
+the `swagger.yml` file.
+
+```shell
+php artisan api:swagger --out=relative/directory/swagger.yml
+#php artisan api:swagger -O /full/path/to/directory/swagger.yml
+```
+
+#### JSON export instead of YAML
 
 When you provide the `--out` with a file-path ending with `.json` you will receive a JSON export of the Swagger config
 instead of a YAML export.
@@ -78,74 +125,56 @@ so after that you can keep adding more spaces.
 php artisan api:swagger --server='test.example.com Test environment' -s 'example.com Production'
 ```
 
-### Tag
+### Excluding routes
 
-Grouping your requests in Swagger is done using tags. Using the command you can tag your endpoints using the filters
-below. Every filter can also be combined for more specific filters!
-
-### Syntax
-
-To tag your endpoints add a `--tag` or `-t` when calling the command. They take a value that is structured as follows;
-
-```text
-{Tag Name}; {filters}
-```
-
-### Tag Filters
-
-Currently we accept the following filter types all using the same syntax
-
-- Controllers (`c:...`)
-- Middlewares (`m:...`)
-- Endpoint / Path (`e:...`)
-
-Using 2 controller filters will apply the filter when either one of the filters is met. However if you provide one of
-each of the filter types all of the filters have to be met.
-
-#### Controller
-
-You can tag a request based on a controller by giving your tag-filter a `c:` prefix
+You can exclude routes using one or more [filter(s)](#filters). Which you can add using the `--exclude` option (or
+the `-e` shorthand). For example; When executing the command below we exclude all routes with URI's containing `foo` and
+all routes that use the `api` middleware
 
 ```shell
-# Tag endpoints that use a controller where the name starts with "Order" with "Orders"
-php artisan api:swagger --tag="Orders; c:Order*"
-
-# Tag endpoints that use a controller where the name contains "Order" with "Orders"
-php artisan api:swagger -t "Orders; c:*Order*"
-
-# Tag endpoints that use a controller where the name contains either "Order" or "Cart" with "Shopping"
-php artisan api:swagger -t "Shopping; c:*Order* c:*Cart*"
+php artisan api:swagger --exclude='uri:*foo*' -e 'middleware:api'
 ```
 
-#### Middlewares
+### Tagging routes
 
-You can tag a request based on a controller by giving your tag-filter a `m:` prefix
+You can tag routes using a _tag name_ and one or more [filter(s)](#filters). You provide these separated by a
+semicolon (`;`). Resulting in `{tag name}; {filter(s)}` as shown below.
 
 ```shell
-# Tag endpoints with "Api" when they use a middleware that either ends with "-api" or is equal to "api"
-php artisan api:swagger --tag="Api; m:*-api m:api"
+php artisan api:swagger --tag "Foo; uri:*foo* middleware:'auth:api'"
 ```
 
-#### Endpoint / Path
+Filters of the same type will always be compared using an OR operation (`||`), whilst having filters of different types
+will always result in them having to all be met.
 
-You can tag a request based on a controller by giving your tag-filter a `e:` prefix
+So when having 1 middleware filter and 2 URI filters; Your route will need to match the _middleware filter_ and **one
+of** the _URI filters_.
 
-```shell
-# Tag endpoints with "Orders" when they exist on a path that contains "order"
-php artisan api:swagger --tag="Orders; e:*order*"
+# Filters
 
-# Tag endpoints with "Shopping" when they exist on a path that contains either "product" or "order"
-php artisan api:swagger -t "Shopping; e:*product* e:*order*"
+The basics of the filters are easy to understand; they are built up from a `type` and a `filter`.
+The `Filter::extract($filterInput)` method returns an `array` containing possibly multiple `Filter`-objects. It does
+this when the provided `$filterInput` contains multiple filters.
+
+If your filter contains a colon (`:`) you can simply surround your `filter` part of the `$filterInput` with either
+single (`'`) or double quotes (`"`).
+
+Example:
+
+```php
+use Rico\Swagger\Support\Filter;
+Filter::extract("foo:bar* lorem_ipsum:*lorem*ipsum* want:'colons:too*?'");
+// Returns an array with two filters.
+//     [ Filter{ type=foo, filter=bar* }, Filter{type=lorem_ipsum, filter=*lorem*ipsum*} ]
 ```
 
-#### Combining
+## Route filters
 
-As said before you can also combine the filters!
+Route filters are filters that have restricted types. Currently, we only allow filtering using the types below.
 
-```shell
-# Tag endpoints with "API Orders" when they exist on a path that contains "order" and they use the "api" middleware
-php artisan api:swagger --tag="API Orders; e:*order* m:api"
-```
-
-
-
+- `action` or `a`
+    - Filters whatever `$route->getAction()` returns (Controller, Controller@method, "Closure", etc.)
+- `middleware` or `m`
+    - Filters all the middlewares that the route returns when `$route->gatherMiddlewares()` is called.
+- `uri` or `url` or `endpoint` or `e` or `u`
+    - Matches `$route->uri()` prefixed with a `'/'` 

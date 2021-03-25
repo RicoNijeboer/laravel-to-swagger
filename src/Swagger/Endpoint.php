@@ -120,7 +120,7 @@ class Endpoint
     public function applyTags(array $tags): self
     {
         $this->tags = array_values(
-            array_filter($tags, fn(Tag $tag) => $tag->matches($this))
+            array_filter($tags, fn(Tag $tag) => $tag->matches($this->originalData->route()))
         );
 
         return $this;
