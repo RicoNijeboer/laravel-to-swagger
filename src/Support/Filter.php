@@ -114,4 +114,12 @@ REGEXP;
     {
         return $this->filter;
     }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string
+    {
+        return "{$this->getType()}:'{$this->getFilter()}'";
+    }
 }

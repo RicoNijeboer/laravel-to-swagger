@@ -10,9 +10,17 @@
     "riconijeboer/laravel-endpoint-reader": "^1.0|dev-master",
     "spatie/laravel-package-tools": "^1.6"
   },
+  "require-dev": {
+    "pestphp/pest": "^1.0"
+  },
   "autoload": {
     "psr-4": {
       "Rico\\Swagger\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Rico\\Swagger\\Tests\\": "tests/"
     }
   },
   "extra": {
@@ -27,5 +35,9 @@
       "name": "Rico Nijeboer",
       "email": "rico@riconijeboer.nl"
     }
-  ]
+  ],
+  "scripts": {
+    "test": "vendor/bin/pest --colors=always",
+    "test-coverage": "vendor/bin/pest --coverage-html coverage"
+  }
 }

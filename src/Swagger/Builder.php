@@ -42,14 +42,9 @@ class Builder
     public function __construct(?string $title = null, ?string $description = null, ?string $version = null, ?array $tags = [])
     {
         $this->title($title ?? ' ');
-        $this->version($version ?? ' ');
+        $this->version($version ?? 'v0.0.1');
         $this->description($description ?? ' ');
         $this->tags($tags ?? []);
-    }
-
-    public static function new(?string $title = null, ?string $description = null, ?string $version = null, ?array $tags = []): self
-    {
-        return new static($title, $description, $version, $tags);
     }
 
     /**

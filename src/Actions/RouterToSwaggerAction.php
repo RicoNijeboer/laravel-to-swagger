@@ -58,7 +58,7 @@ class RouterToSwaggerAction
     ): string {
         $this->validateType($type);
         $this->router = $router;
-        $this->swagger = Builder::new($title, $description, $version, $tags);
+        $this->swagger = new Builder($title, $description, $version, $tags);
 
         $this->readRoutes($exclude);
         $this->addServers($servers);

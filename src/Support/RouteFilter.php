@@ -30,6 +30,15 @@ class RouteFilter extends Filter
         'u'        => self::FILTER_TYPE_URI,
     ];
 
+    public function __construct(string $type, string $filter)
+    {
+        parent::__construct($type, $filter);
+
+        if (!$this->isType(self::FILTER_TYPES)) {
+            throw new UnsupportedFilterTypeException($type);
+        }
+    }
+
     /**
      * Extract Route filters from the given input.
      *
@@ -42,11 +51,7 @@ class RouteFilter extends Filter
     {
         $filters = parent::extract($input);
 
-        if (collect($filters)->every(fn (Filter $filter) => $filter->isType(self::FILTER_TYPES))) {
-            return $filters;
-        }
-
-        throw new UnsupportedFilterTypeException('one of: ' . implode(', ', array_map(fn (RouteFilter $filter) => $filter->getType(), $filters)));
+        return $filters;
     }
 
     /**

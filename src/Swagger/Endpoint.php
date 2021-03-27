@@ -7,7 +7,7 @@ use Rico\Reader\Endpoints\DataType;
 use Rico\Reader\Endpoints\DataType as ReaderDataType;
 use Rico\Reader\Endpoints\EndpointData;
 use Rico\Reader\Exceptions\PropertyIsNotInRulesException;
-use Rico\Swagger\Support\Arr;
+use Illuminate\Support\Arr;
 
 /**
  * Class Endpoint
