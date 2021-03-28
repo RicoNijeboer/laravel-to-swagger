@@ -127,14 +127,14 @@ so after that you can keep adding more spaces.
 php artisan api:swagger --server='test.example.com Test environment' -s 'example.com Production'
 ```
 
-### Filtering routes
+### "Including" routes
 
-You can exclude routes using one or more [filter(s)](#filters). Which you can add using the `--exclude` option (or
-the `-e` shorthand). For example; When executing the command below we exclude all routes with URI's containing `foo` and
+You can include routes using one or more [filter(s)](#filters). Which you can add using the `--include` option (or
+the `-e` shorthand). For example; When executing the command below we include all routes with URI's containing `foo` and
 all routes that use the `api` middleware
 
 ```shell
-php artisan api:swagger --exclude='uri:*foo*' -e 'middleware:api'
+php artisan api:swagger --include='uri:*foo*' -i 'middleware:api'
 ```
 
 ### Excluding routes
