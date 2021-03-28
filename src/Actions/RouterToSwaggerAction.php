@@ -9,7 +9,6 @@ use Illuminate\Support\Collection;
 use Rico\Reader\Endpoints\EndpointReader;
 use Rico\Reader\Exceptions\EndpointDoesntExistException;
 use Rico\Swagger\Exceptions\UnsupportedSwaggerExportTypeException;
-use Rico\Swagger\Support\Filter;
 use Rico\Swagger\Support\RouteFilter;
 use Rico\Swagger\Swagger\Builder;
 use Rico\Swagger\Swagger\Server;
@@ -26,22 +25,24 @@ class RouterToSwaggerAction
 {
     const TYPE_YAML = 10;
     const TYPE_JSON = 20;
+    const TYPE_ARRAY = 30;
     private Router $router;
     private Builder $swagger;
 
     /**
      * Convert the router to the provided type.
      *
-     * @param Router      $router
-     * @param string|null $title
-     * @param string|null $description
-     * @param string|null $version
-     * @param Server[]    $servers
-     * @param Tag[]       $tags
-     * @param Filter[]    $exclude
-     * @param int         $type
+     * @param Router        $router
+     * @param string|null   $title
+     * @param string|null   $description
+     * @param string|null   $version
+     * @param Server[]      $servers
+     * @param Tag[]         $tags
+     * @param RouteFilter[] $exclude
+     * @param RouteFilter[] $include
+     * @param int           $type
      *
-     * @return string
+     * @return string|array
      * @throws BindingResolutionException
      * @throws EndpointDoesntExistException
      * @throws UnsupportedSwaggerExportTypeException
@@ -54,13 +55,14 @@ class RouterToSwaggerAction
         array $servers = [],
         array $tags = [],
         array $exclude = [],
+        array $include = [],
         int $type = self::TYPE_YAML
-    ): string {
+    ) {
         $this->validateType($type);
         $this->router = $router;
         $this->swagger = new Builder($title, $description, $version, $tags);
 
-        $this->readRoutes($exclude);
+        $this->readRoutes($exclude, $include);
         $this->addServers($servers);
 
         return $this->export($type);
@@ -70,18 +72,14 @@ class RouterToSwaggerAction
      * Read the routes.
      *
      * @param RouteFilter[] $exclude
+     * @param RouteFilter[] $include
      *
      * @throws BindingResolutionException
      * @throws EndpointDoesntExistException
      */
-    public function readRoutes(array $exclude): void
+    public function readRoutes(array $exclude, array $include = []): void
     {
-        $exclude = collect($exclude);
-
-        $this->routes()
-            ->filter(function (Route $route) use ($exclude) {
-                return !$exclude->some(fn (RouteFilter $filter) => $filter->matchesRoute($route));
-            })
+        $this->routes($exclude, $include)
             ->each(function (Route $route) {
                 $this->swagger->addPath(
                     $route->uri(),
@@ -101,18 +99,32 @@ class RouterToSwaggerAction
      */
     public function readRoute(Route $route): array
     {
-        return EndpointReader::readRoute($route)
-            ->all();
+        return EndpointReader::readRoute($route, $route->methods())->all();
     }
 
     /**
      * Get the routes.
      *
+     * @param RouteFilter[] $exclude
+     * @param array         $include
+     *
      * @return Collection
      */
-    public function routes(): Collection
+    public function routes(array $exclude, array $include = []): Collection
     {
-        return collect($this->router->getRoutes()->getRoutes());
+        $exclude = collect($exclude);
+        $include = collect($include);
+
+        return collect($this->router->getRoutes()->getRoutes())
+            ->filter(function (Route $route) use ($exclude, $include) {
+                $isExcluded = $exclude->some(fn (RouteFilter $filter) => $filter->matchesRoute($route));
+
+                if ($isExcluded) {
+                    return false;
+                }
+
+                return $include->isEmpty() || $include->some(fn (RouteFilter $filter) => $filter->matchesRoute($route));
+            });
     }
 
     /**
@@ -125,6 +137,7 @@ class RouterToSwaggerAction
         switch ($type) {
             case self::TYPE_JSON:
             case self::TYPE_YAML:
+            case self::TYPE_ARRAY:
                 break;
             default:
                 throw new UnsupportedSwaggerExportTypeException($type);
@@ -136,18 +149,21 @@ class RouterToSwaggerAction
      *
      * @param int $type
      *
-     * @return string
+     * @return string|array
      */
-    protected function export(int $type): string
+    protected function export(int $type)
     {
+        $this->validateType($type);
+
         switch ($type) {
             case self::TYPE_JSON:
                 return $this->swagger->toJson();
             case self::TYPE_YAML:
                 return $this->swagger->toYaml();
+            case self::TYPE_ARRAY:
+            default:
+                return $this->swagger->toArray();
         }
-
-        return 'How did we get here?';
     }
 
     /**

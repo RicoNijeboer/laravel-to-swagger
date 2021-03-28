@@ -69,6 +69,8 @@ php artisan api:check-filter 'foo:*bar:baz* moo:cow'
         - Servers to add, provide the URLs
     - [`--t|tag=*`](#tagging-routes)
         - Tag a part of your endpoints using a specified syntax
+    - [`--f|filter=*`](#filtering-routes)
+        - Filter a part of your endpoints using the filter syntax
     - [`--e|exclude=*`](#excluding-routes)
         - Exclude a part of your endpoints using the filter syntax
 
@@ -123,6 +125,16 @@ so after that you can keep adding more spaces.
 
 ```shell
 php artisan api:swagger --server='test.example.com Test environment' -s 'example.com Production'
+```
+
+### Filtering routes
+
+You can exclude routes using one or more [filter(s)](#filters). Which you can add using the `--exclude` option (or
+the `-e` shorthand). For example; When executing the command below we exclude all routes with URI's containing `foo` and
+all routes that use the `api` middleware
+
+```shell
+php artisan api:swagger --exclude='uri:*foo*' -e 'middleware:api'
 ```
 
 ### Excluding routes

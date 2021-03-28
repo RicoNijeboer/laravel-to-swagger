@@ -30,6 +30,7 @@ class ExportSwaggerCommand extends Command
                             { --O|out=swagger.yml : The output path, can be both relative and the full path }
                             { --s|server=* : Servers to add }
                             { --t|tag=* : Tag a part of your endpoints using the filter syntax }
+                            { --i|include=* : Only include a part of your endpoints using the filter syntax (when no filters are provided it will use all routes) }
                             { --e|exclude=* : Exclude a part of your endpoints using the filter syntax }';
     private string $outputPath;
     private bool $yaml = true;
@@ -54,6 +55,7 @@ class ExportSwaggerCommand extends Command
             $this->getServers(),
             $this->getTags(),
             $this->getExclude(),
+            $this->getInclude(),
             $this->yaml ? RouterToSwaggerAction::TYPE_YAML : RouterToSwaggerAction::TYPE_JSON,
         );
 
@@ -114,6 +116,18 @@ class ExportSwaggerCommand extends Command
     {
         return array_reduce(
             $this->option('exclude'),
+            fn (array $filters, string $filter) => array_merge($filters, RouteFilter::extract($filter)),
+            []
+        );
+    }
+
+    /**
+     * @return RouteFilter[]
+     */
+    protected function getInclude(): array
+    {
+        return array_reduce(
+            $this->option('include'),
             fn (array $filters, string $filter) => array_merge($filters, RouteFilter::extract($filter)),
             []
         );
