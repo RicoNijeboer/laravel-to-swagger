@@ -41,11 +41,13 @@ class RouterToSwaggerAction
      * @param RouteFilter[] $exclude
      * @param RouteFilter[] $include
      * @param int           $type
+     * @param array         $oauthConfig
      *
      * @return string|array
      * @throws BindingResolutionException
      * @throws EndpointDoesntExistException
      * @throws UnsupportedSwaggerExportTypeException
+     * @throws \ReflectionException
      */
     public function convert(
         Router $router,
@@ -56,11 +58,14 @@ class RouterToSwaggerAction
         array $tags = [],
         array $exclude = [],
         array $include = [],
-        int $type = self::TYPE_YAML
+        int $type = self::TYPE_YAML,
+        array $oauthConfig = ['enabled' => false]
     ) {
         $this->validateType($type);
         $this->router = $router;
         $this->swagger = new Builder($title, $description, $version, $tags);
+
+        $this->swagger->oauth($oauthConfig);
 
         $this->readRoutes($exclude, $include);
         $this->addServers($servers);
@@ -76,6 +81,7 @@ class RouterToSwaggerAction
      *
      * @throws BindingResolutionException
      * @throws EndpointDoesntExistException
+     * @throws \ReflectionException
      */
     public function readRoutes(array $exclude, array $include = []): void
     {
@@ -83,7 +89,8 @@ class RouterToSwaggerAction
             ->each(function (Route $route) {
                 $this->swagger->addPath(
                     $route->uri(),
-                    $this->readRoute($route)
+                    $this->readRoute($route),
+                    $route
                 );
             });
     }

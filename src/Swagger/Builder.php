@@ -2,10 +2,13 @@
 
 namespace Rico\Swagger\Swagger;
 
+use Illuminate\Routing\Route;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Rico\Reader\Endpoints\EndpointData;
 use Rico\Swagger\Formatter\Formatter;
+use Rico\Swagger\Routes\RouteMiddlewareHelper;
 
 /**
  * Class SwaggerBuilder
@@ -14,22 +17,46 @@ use Rico\Swagger\Formatter\Formatter;
  */
 class Builder
 {
-
+    protected RouteMiddlewareHelper $routeMiddlewareHelper;
     protected string $openapi = '3.0.0';
-
     protected array $info = [
         'title'       => ' ',
         'version'     => ' ',
         'description' => ' ',
     ];
-
     /** @var Server[] */
     protected array $servers = [];
-
     protected array $paths = [];
-
     /** @var Tag[] */
     protected array $tags;
+    protected array $oauthConfig = [
+        'enabled'            => false,
+        'scopes'             => [
+            // 'ScopeID' => 'Description',
+        ],
+        'flows'              => [
+            'clientCredentials' => [
+                'enabled'  => false,
+                'tokenUrl' => null,
+            ],
+            'password'          => [
+                'enabled'  => false,
+                'tokenUrl' => null,
+            ],
+            'authorizationCode' => [
+                'enabled'          => false,
+                'tokenUrl'         => null,
+                'authorizationUrl' => null,
+            ],
+            'implicit'          => [
+                'enabled'          => false,
+                'tokenUrl'         => null,
+                'authorizationUrl' => null,
+            ],
+        ],
+        'routeUsesOauth'     => null,// fn(Route $route) => bool
+        'routeScopeResolver' => null,// fn(Route $route) => array
+    ];
 
     /**
      * SwaggerBuilder constructor.
@@ -45,6 +72,8 @@ class Builder
         $this->version($version ?? 'v0.0.1');
         $this->description($description ?? ' ');
         $this->tags($tags ?? []);
+
+        $this->routeMiddlewareHelper = app(RouteMiddlewareHelper::class);
     }
 
     /**
@@ -122,22 +151,31 @@ class Builder
      *
      * @param string         $uri
      * @param EndpointData[] $data
+     * @param Route          $route
      *
      * @return Builder
+     * @throws \ReflectionException
      */
-    public function addPath(string $uri, array $data): self
+    public function addPath(string $uri, array $data, Route $route): self
     {
         $uri = Str::start($uri, '/');
 
-        if ( ! array_key_exists($uri, $this->paths))
-        {
+        if (!array_key_exists($uri, $this->paths)) {
             $this->paths[$uri] = collect();
         }
 
-        $endpoints = array_map(fn(EndpointData $endpointData) => new Endpoint($endpointData), $data);
+        $endpoints = array_map(fn (EndpointData $endpointData) => new Endpoint($endpointData), $data);
 
-        foreach ($endpoints as $method => $endpoint)
-        {
+        foreach ($endpoints as $method => $endpoint) {
+            /** @var Endpoint $endpoint */
+            if ($this->oauthConfig['enabled']) {
+                $oauthRouteInfo = $this->routeMiddlewareHelper->oauthInfo($route);
+
+                if ($oauthRouteInfo['enabled']) {
+                    $endpoint->addSecurity('oauth', $oauthRouteInfo['scopes']);
+                }
+            }
+
             $this->paths[$uri]->put($method, $endpoint);
         }
 
@@ -161,12 +199,31 @@ class Builder
                 ->all();
         }, $this->paths);
 
-        return array_filter([
+        $array = [
             'info'    => $this->info,
-            'servers' => array_map(fn(Server $server) => $server->toArray(), $this->servers),
+            'servers' => array_map(fn (Server $server) => $server->toArray(), $this->servers),
             'openapi' => $this->openapi,
             'paths'   => $paths,
-        ], fn($item) => ! empty($item));
+        ];
+
+        if ($this->oauthConfig['enabled']) {
+            Arr::set($array, 'components.securitySchemes.oauth.type', 'oauth2');
+            Arr::set($array, 'components.securitySchemes.oauth.flows', $this->oauthFlows());
+        }
+
+        return array_filter($array, fn ($item) => !empty($item));
+    }
+
+    /**
+     * @param array $oauthConfig
+     *
+     * @return $this
+     */
+    public function oauth(array $oauthConfig): self
+    {
+        $this->oauthConfig = $oauthConfig;
+
+        return $this;
     }
 
     /**
@@ -187,5 +244,32 @@ class Builder
     public function toJson(): string
     {
         return Formatter::json($this->toArray());
+    }
+
+    /**
+     * @return array
+     */
+    protected function oauthFlows(): array
+    {
+        if (!$this->oauthConfig['enabled']) {
+            return [];
+        }
+
+        $config = [];
+        $scopes = $this->oauthConfig['scopes'] ?? [];
+
+        foreach (['clientCredentials', 'password', 'authorizationCode', 'implicit'] as $flow) {
+            $flowConfig = Arr::get($this->oauthConfig['flows'] ?? [], $flow, ['enabled' => false]);
+
+            if (!$flowConfig['enabled']) {
+                continue;
+            }
+
+            $config[$flow] = Arr::except($flowConfig, ['enabled']);
+
+            $config[$flow]['scopes'] = count($scopes) === 0 ? '{}' : $scopes;
+        }
+
+        return $config;
     }
 }

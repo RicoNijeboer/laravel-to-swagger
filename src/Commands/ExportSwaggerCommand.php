@@ -7,11 +7,15 @@ use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Laravel\Passport\Client;
+use Laravel\Passport\Passport;
+use Laravel\Passport\Scope;
+use ReflectionException;
 use Rico\Reader\Exceptions\EndpointDoesntExistException;
 use Rico\Swagger\Actions\RouterToSwaggerAction;
 use Rico\Swagger\Exceptions\UnsupportedSwaggerExportTypeException;
+use Rico\Swagger\Routes\RouteMiddlewareHelper;
 use Rico\Swagger\Support\RouteFilter;
-use Rico\Swagger\Swagger\Formatter\Formatter;
 use Rico\Swagger\Swagger\Server;
 use Rico\Swagger\Swagger\Tag;
 
@@ -34,14 +38,27 @@ class ExportSwaggerCommand extends Command
                             { --e|exclude=* : Exclude a part of your endpoints using the filter syntax }';
     private string $outputPath;
     private bool $yaml = true;
+    private RouteMiddlewareHelper $routeMiddlewareHelper;
+
+    /**
+     * ExportSwaggerCommand constructor.
+     *
+     * @param RouteMiddlewareHelper $resolver
+     */
+    public function __construct(RouteMiddlewareHelper $resolver)
+    {
+        parent::__construct();
+        $this->routeMiddlewareHelper = $resolver;
+    }
 
     /**
      * @param Router                $router
      * @param RouterToSwaggerAction $action
      *
-     * @throws EndpointDoesntExistException
      * @throws BindingResolutionException
+     * @throws EndpointDoesntExistException
      * @throws UnsupportedSwaggerExportTypeException
+     * @throws ReflectionException
      */
     public function handle(Router $router, RouterToSwaggerAction $action)
     {
@@ -57,9 +74,75 @@ class ExportSwaggerCommand extends Command
             $this->getExclude(),
             $this->getInclude(),
             $this->yaml ? RouterToSwaggerAction::TYPE_YAML : RouterToSwaggerAction::TYPE_JSON,
+            $this->oauthConfig($router)
         );
 
         File::put($this->outputPath, $fileContent);
+    }
+
+    /**
+     * @return bool
+     */
+    protected function hasLaravelPassport(): bool
+    {
+        return count(app()->getProviders(\Laravel\Passport\PassportServiceProvider::class)) !== 0;
+    }
+
+    /**
+     * @param Router $router
+     *
+     * @return array
+     */
+    protected function oauthConfig(Router $router): array
+    {
+        $config = ['enabled' => $this->hasLaravelPassport()];
+
+        if ($config['enabled']) {
+            $clients = Passport::client()
+                ->newQuery()
+                ->get();
+
+            $config['scopes'] = Passport::scopes()
+                ->mapWithKeys(fn (Scope $scope) => [
+                    $scope->id => $scope->description,
+                ])
+                ->all();
+
+            $hasTokenUrl = $router->has('passport.token');
+            $hasAuthorizationUrl = $router->has('passport.authorizations.authorize');
+
+            $config['flows'] = [
+                'clientCredentials' => [
+                    'enabled'  => $clients->filter->password_client->isNotEmpty() && $hasTokenUrl,
+                    'tokenUrl' => $hasTokenUrl ? route('passport.token') : null,
+                ],
+                'password'          => [
+                    'enabled'  => $clients->filter->confidential()->isNotEmpty() && $hasTokenUrl,
+                    'tokenUrl' => $hasTokenUrl ? route('passport.token') : null,
+                ],
+                'authorizationCode' => [
+                    'enabled'          => $clients
+                            ->filter(fn (Client $client) => !$client->firstParty())
+                            ->isNotEmpty() && $hasTokenUrl && $hasAuthorizationUrl,
+                    'tokenUrl'         => $hasTokenUrl ? route('passport.token') : null,
+                    'authorizationUrl' => $hasAuthorizationUrl ? route('passport.authorizations.authorize') : null,
+                ],
+                'implicit'          => [
+                    'enabled'          => $clients
+                            ->filter(
+                                fn (Client $client) => !(
+                                    is_array($client->grant_types)
+                                    && !in_array('implicit', $client->grant_types)
+                                )
+                            )
+                            ->isNotEmpty() && $hasTokenUrl && $hasAuthorizationUrl,
+                    'tokenUrl'         => $hasTokenUrl ? route('passport.token') : null,
+                    'authorizationUrl' => $hasAuthorizationUrl ? route('passport.authorizations.authorize') : null,
+                ],
+            ];
+        }
+
+        return $config;
     }
 
     /**
@@ -114,8 +197,16 @@ class ExportSwaggerCommand extends Command
      */
     protected function getExclude(): array
     {
+        $exclude = $this->option('exclude');
+
+        // Because Laravel telescope breaks everything we exclude it by default (I'm sorry <3).
+        $telescopeFilter = new RouteFilter(RouteFilter::FILTER_TYPE_URI, '*telescope*');
+        if (!$telescopeFilter->arrayMatches($exclude)) {
+            $exclude[] = "{$telescopeFilter->getType()}:'{$telescopeFilter->getFilter()}'";
+        }
+
         return array_reduce(
-            $this->option('exclude'),
+            $exclude,
             fn (array $filters, string $filter) => array_merge($filters, RouteFilter::extract($filter)),
             []
         );

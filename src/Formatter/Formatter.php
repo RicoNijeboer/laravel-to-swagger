@@ -22,6 +22,7 @@ class Formatter
         $yaml = BaseFormatter::make($data, BaseFormatter::ARR)->toYaml();
 
         $yaml = preg_replace('/^(\s*)-(\s?\n\s*)/m', '$1- ', $yaml);
+        $yaml = preg_replace('/(:)\s>\s*(\w+)/m', '$1 $2', $yaml);
 
         return str_replace("---\n", '', $yaml);
     }
