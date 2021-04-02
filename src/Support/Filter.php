@@ -71,6 +71,10 @@ REGEXP;
     public function arrayMatches(array $array): bool
     {
         foreach ($array as $value) {
+            if (is_null($value)) {
+                continue;
+            }
+
             $matches = is_array($value)
                 ? $this->arrayMatches($value)
                 : $this->matches($value);

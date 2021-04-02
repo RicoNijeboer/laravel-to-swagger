@@ -68,10 +68,9 @@ class Tag
         return collect($this->filters)
             ->groupBy(fn (RouteFilter $filter) => $filter->getType())
             ->every(function (Collection $filters) use ($route) {
-                /** @var RouteFilter $filter */
-                $filter = $filters->some;
-
-                return $filter->matchesRoute($route);
+                return $filters->some(function (RouteFilter $filter) use ($route) {
+                    return $filter->matchesRoute($route);
+                });
             });
     }
 
