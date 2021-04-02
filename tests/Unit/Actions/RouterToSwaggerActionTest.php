@@ -4,6 +4,7 @@ use Illuminate\Routing\Route;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use Mockery\MockInterface;
 use Rico\Swagger\Actions\RouterToSwaggerAction;
 use Rico\Swagger\Exceptions\UnsupportedSwaggerExportTypeException;
@@ -22,18 +23,24 @@ it('reads all routes when no `include`- or `exclude`-filters are provided', func
             ->andReturnUsing(fn () => $routesProperty->getValue($mock));
     });
 
-    property($action, 'router', true)->setValue($action, $router);
+    $routes = method($action, 'routes', true);
 
-    expect($action->routes([]))
-        ->toBeInstanceOf(Collection::class)
+    /** @var LazyCollection $result */
+    $result = $routes->invoke($action, $router);
+
+    expect($result)
+        ->toBeInstanceOf(LazyCollection::class)
         ->toHaveCount(0);
 
     $routeCollection = new RouteCollection();
     $routeCollection->add(new Route(['GET'], '/orders', fn () => null));
     property($router, 'routes', true)->setValue($router, $routeCollection);
 
-    expect($action->routes([]))
-        ->toBeInstanceOf(Collection::class)
+    /** @var LazyCollection $result */
+    $result = $routes->invoke($action, $router);
+
+    expect($result)
+        ->toBeInstanceOf(LazyCollection::class)
         ->toHaveCount(1);
 });
 
@@ -50,21 +57,24 @@ it('does not read the routes that match the `exclude`-filters', function () {
         $mock->shouldReceive('getRoutes')
             ->andReturnUsing(fn () => $routesProperty->getValue($mock));
     });
-    property($action, 'router', true)->setValue($action, $router);
 
-    $result = $action->routes([new RouteFilter('uri', '*order*')]);
+    $routes = method($action, 'routes', true);
+
+    /** @var LazyCollection $result */
+    $result = $routes->invoke($action, $router);
 
     expect($result)
-        ->toBeInstanceOf(Collection::class)
-        ->toHaveCount(1)
-        ->and($result->first())
-        ->toBeInstanceOf(Route::class);
+        ->toBeInstanceOf(LazyCollection::class)
+        ->toHaveCount(2);
 
-    $result->each(function (Route $route) {
-        expect($route)
-            ->toHaveProperty('uri', 'products')
-            ->not()->toHaveProperty('uri', 'orders');
-    });
+    /** @var LazyCollection $result */
+    $result = $routes->invoke($action, $router, [], [
+        new RouteFilter(RouteFilter::FILTER_TYPE_URI, '*orders*'),
+    ]);
+
+    expect($result)
+        ->toBeInstanceOf(LazyCollection::class)
+        ->toHaveCount(1);
 });
 
 it('only reads the routes that should match the `include`-filters', function () {
@@ -80,42 +90,56 @@ it('only reads the routes that should match the `include`-filters', function () 
         $mock->shouldReceive('getRoutes')
             ->andReturnUsing(fn () => $routesProperty->getValue($mock));
     });
-    property($action, 'router', true)->setValue($action, $router);
 
-    $result = $action->routes([], [new RouteFilter('uri', '*order*')]);
+    $routes = method($action, 'routes', true);
+
+    /** @var LazyCollection $result */
+    $result = $routes->invoke($action, $router);
 
     expect($result)
-        ->toBeInstanceOf(Collection::class)
-        ->toHaveCount(1)
-        ->and($result->first())
-        ->toBeInstanceOf(Route::class);
+        ->toBeInstanceOf(LazyCollection::class)
+        ->toHaveCount(2);
 
-    $result->each(function (Route $route) {
-        expect($route)
-            ->toHaveProperty('uri', 'orders')
-            ->not()->toHaveProperty('uri', 'products');
-    });
+    /** @var LazyCollection $result */
+    $result = $routes->invoke($action, $router, [], [
+        new RouteFilter(RouteFilter::FILTER_TYPE_URI, '*orders*'),
+    ]);
+
+    expect($result)
+        ->toBeInstanceOf(LazyCollection::class)
+        ->toHaveCount(1);
 });
 
-it('will not read a route that matches an `include`-filter and an `exclude`-filter', function () {
+it('asdfasdfasdf will not read a route that matches an `include`-filter and an `exclude`-filter', function () {
     $action = new RouterToSwaggerAction();
     $router = mock(Router::class, function (MockInterface $mock) {
         $routesProperty = property($mock, 'routes', true);
 
         $routeCollection = new RouteCollection();
         $routeCollection->add(new Route(['GET'], '/orders', fn () => null));
+        $routeCollection->add(new Route(['GET'], '/products', fn () => null));
         $routesProperty->setValue($mock, $routeCollection);
 
         $mock->shouldReceive('getRoutes')
             ->andReturnUsing(fn () => $routesProperty->getValue($mock));
     });
-    property($action, 'router', true)->setValue($action, $router);
 
-    $filter = new RouteFilter('uri', '*order*');
-    $result = $action->routes([$filter], [$filter]);
+    $routes = method($action, 'routes', true);
+
+    /** @var LazyCollection $result */
+    $result = $routes->invoke($action, $router);
 
     expect($result)
-        ->toBeInstanceOf(Collection::class)
+        ->toBeInstanceOf(LazyCollection::class)
+        ->toHaveCount(2);
+
+    $filter = new RouteFilter(RouteFilter::FILTER_TYPE_URI, '*orders*');
+
+    /** @var LazyCollection $result */
+    $result = $routes->invoke($action, $router, [$filter], [$filter]);
+
+    expect($result)
+        ->toBeInstanceOf(LazyCollection::class)
         ->toHaveCount(0);
 });
 
@@ -129,9 +153,7 @@ it('can export the Swagger config in `yaml` format', function () {
             ->andReturn('TYPE: YAML');
     });
 
-    property($action, 'swagger', true)->setValue($action, $swagger);
-
-    expect($export->invoke($action, RouterToSwaggerAction::TYPE_YAML))
+    expect($export->invoke($action, $swagger, RouterToSwaggerAction::TYPE_YAML))
         ->toBe('TYPE: YAML');
 });
 
@@ -145,9 +167,7 @@ it('can export the Swagger config in `json` format', function () {
             ->andReturn('TYPE: JSON');
     });
 
-    property($action, 'swagger', true)->setValue($action, $swagger);
-
-    expect($export->invoke($action, RouterToSwaggerAction::TYPE_JSON))
+    expect($export->invoke($action, $swagger, RouterToSwaggerAction::TYPE_JSON))
         ->toBe('TYPE: JSON');
 });
 
@@ -163,9 +183,7 @@ it('can export the Swagger config in `array` format', function () {
             ]);
     });
 
-    property($action, 'swagger', true)->setValue($action, $swagger);
-
-    expect($export->invoke($action, RouterToSwaggerAction::TYPE_ARRAY))
+    expect($export->invoke($action, $swagger, RouterToSwaggerAction::TYPE_ARRAY))
         ->toBeArray()
         ->toHaveKey('type', 'ARRAY');
 });
@@ -173,8 +191,9 @@ it('can export the Swagger config in `array` format', function () {
 it('will throw an exception when export() is called with an invalid type', function () {
     $action = new RouterToSwaggerAction();
     $export = method($action, 'export', true);
+    $swagger = mock(Builder::class);
 
-    $export->invoke($action, PHP_INT_MIN);
+    $export->invoke($action, $swagger, PHP_INT_MIN);
 })->throws(UnsupportedSwaggerExportTypeException::class);
 
 it('will throw an exception when convert() is called with an invalid type', function () {

@@ -14,7 +14,7 @@ use ReflectionException;
 use Rico\Reader\Exceptions\EndpointDoesntExistException;
 use Rico\Swagger\Actions\RouterToSwaggerAction;
 use Rico\Swagger\Exceptions\UnsupportedSwaggerExportTypeException;
-use Rico\Swagger\Routes\RouteMiddlewareHelper;
+use Rico\Swagger\Routing\RouteMiddlewareHelper;
 use Rico\Swagger\Support\RouteFilter;
 use Rico\Swagger\Swagger\Server;
 use Rico\Swagger\Swagger\Tag;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Rico\Swagger\Routes;
+namespace Rico\Swagger\Routing;
 
 use Illuminate\Auth\Middleware\Authenticate as AuthenticateMiddleware;
 use Illuminate\Contracts\Http\Kernel;
@@ -20,7 +20,7 @@ use ReflectionProperty;
 /**
  * Class RouteMiddlewareResolver
  *
- * @package Rico\Swagger\Routes
+ * @package Rico\Swagger\Routing
  */
 class RouteMiddlewareHelper
 {

@@ -4,6 +4,7 @@ use Illuminate\Routing\Route;
 use Mockery\MockInterface;
 use Pest\Expectations\Expectation;
 use PHPUnit\Framework\Assert;
+use Rico\Swagger\Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,7 +17,7 @@ use PHPUnit\Framework\Assert;
 |
 */
 
-// uses(Tests\TestCase::class)->in('Feature');
+uses(TestCase::class)->in('Unit');
 
 /*
 |--------------------------------------------------------------------------

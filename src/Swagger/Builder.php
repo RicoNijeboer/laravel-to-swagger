@@ -2,13 +2,14 @@
 
 namespace Rico\Swagger\Swagger;
 
+use Illuminate\Container\Container;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Rico\Reader\Endpoints\EndpointData;
 use Rico\Swagger\Formatter\Formatter;
-use Rico\Swagger\Routes\RouteMiddlewareHelper;
+use Rico\Swagger\Routing\RouteMiddlewareHelper;
 
 /**
  * Class SwaggerBuilder
@@ -73,7 +74,7 @@ class Builder
         $this->description($description ?? ' ');
         $this->tags($tags ?? []);
 
-        $this->routeMiddlewareHelper = app(RouteMiddlewareHelper::class);
+        $this->routeMiddlewareHelper = Container::getInstance()->make(RouteMiddlewareHelper::class);
     }
 
     /**

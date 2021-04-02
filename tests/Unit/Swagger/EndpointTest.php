@@ -2,6 +2,7 @@
 
 use Rico\Reader\Endpoints\EndpointData;
 use Rico\Swagger\Swagger\Endpoint;
+use Rico\Swagger\Tests\TestCase;
 
 it('can read properties from Laravel request rules', function () {
     $propertiesProp = property(Endpoint::class, 'properties', true);

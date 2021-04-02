@@ -4,6 +4,7 @@ use Illuminate\Routing\Route;
 use Mockery\MockInterface;
 use Rico\Swagger\Exceptions\UnsupportedFilterTypeException;
 use Rico\Swagger\Support\RouteFilter;
+use Rico\Swagger\Tests\TestCase;
 
 it('will throw an error when the type does not exist and you use the constructor', function (string $notExistingType) {
     new RouteFilter($notExistingType, '*');

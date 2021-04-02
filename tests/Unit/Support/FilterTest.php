@@ -1,6 +1,7 @@
 <?php
 
 use Rico\Swagger\Support\Filter;
+use Rico\Swagger\Tests\TestCase;
 
 it('can extract the expected filters from the provided filter', function (string $input, string $expectedType, string $expectedFilter) {
     [$filter] = Filter::extract($input);

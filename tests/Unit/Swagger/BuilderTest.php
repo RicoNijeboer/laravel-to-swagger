@@ -69,7 +69,7 @@ it('merges paths on the same URI per method', function () {
     $builder->addPath('orders', [
         'get'  => $index,
         'post' => $store,
-    ]);
+    ], $storeRoute);
 
     $paths = $property->getValue($builder);
 
@@ -100,7 +100,7 @@ it('returns the path when the configuration is built', function () {
     $builder->addPath('orders', [
         'get'  => $index,
         'post' => $store,
-    ]);
+    ], $storeRoute);
 
     $config = $builder->toArray();
 

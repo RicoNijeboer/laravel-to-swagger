@@ -5,7 +5,8 @@ namespace Rico\Swagger\Actions;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\Router;
-use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
+use ReflectionException;
 use Rico\Reader\Endpoints\EndpointReader;
 use Rico\Reader\Exceptions\EndpointDoesntExistException;
 use Rico\Swagger\Exceptions\UnsupportedSwaggerExportTypeException;
@@ -13,8 +14,6 @@ use Rico\Swagger\Support\RouteFilter;
 use Rico\Swagger\Swagger\Builder;
 use Rico\Swagger\Swagger\Server;
 use Rico\Swagger\Swagger\Tag;
-
-use function array_walk;
 
 /**
  * Class RouterToSwaggerAction
@@ -26,8 +25,6 @@ class RouterToSwaggerAction
     const TYPE_YAML = 10;
     const TYPE_JSON = 20;
     const TYPE_ARRAY = 30;
-    private Router $router;
-    private Builder $swagger;
 
     /**
      * Convert the router to the provided type.
@@ -44,10 +41,8 @@ class RouterToSwaggerAction
      * @param array         $oauthConfig
      *
      * @return string|array
-     * @throws BindingResolutionException
-     * @throws EndpointDoesntExistException
      * @throws UnsupportedSwaggerExportTypeException
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function convert(
         Router $router,
@@ -56,43 +51,21 @@ class RouterToSwaggerAction
         ?string $version = null,
         array $servers = [],
         array $tags = [],
-        array $exclude = [],
         array $include = [],
+        array $exclude = [],
         int $type = self::TYPE_YAML,
         array $oauthConfig = ['enabled' => false]
     ) {
         $this->validateType($type);
-        $this->router = $router;
-        $this->swagger = new Builder($title, $description, $version, $tags);
+        $swagger = new Builder($title, $description, $version, $tags);
 
-        $this->swagger->oauth($oauthConfig);
+        $this->addServers($swagger, $servers);
+        $swagger->oauth($oauthConfig);
 
-        $this->readRoutes($exclude, $include);
-        $this->addServers($servers);
+        $this->routes($router, $include, $exclude)
+            ->each(fn (array $data) => $swagger->addPath(...$data));
 
-        return $this->export($type);
-    }
-
-    /**
-     * Read the routes.
-     *
-     * @param RouteFilter[] $exclude
-     * @param RouteFilter[] $include
-     *
-     * @throws BindingResolutionException
-     * @throws EndpointDoesntExistException
-     * @throws \ReflectionException
-     */
-    public function readRoutes(array $exclude, array $include = []): void
-    {
-        $this->routes($exclude, $include)
-            ->each(function (Route $route) {
-                $this->swagger->addPath(
-                    $route->uri(),
-                    $this->readRoute($route),
-                    $route
-                );
-            });
+        return $this->export($swagger, $type);
     }
 
     /**
@@ -106,32 +79,44 @@ class RouterToSwaggerAction
      */
     public function readRoute(Route $route): array
     {
-        return EndpointReader::readRoute($route, $route->methods())->all();
+        return EndpointReader::readRoute($route, $route->methods())
+            ->all();
     }
 
     /**
-     * Get the routes.
+     * @param Router $router
+     * @param array  $include
+     * @param array  $exclude
      *
-     * @param RouteFilter[] $exclude
-     * @param array         $include
-     *
-     * @return Collection
+     * @return LazyCollection
      */
-    public function routes(array $exclude, array $include = []): Collection
+    protected function routes(Router $router, array $include = [], array $exclude = []): LazyCollection
     {
-        $exclude = collect($exclude);
         $include = collect($include);
+        $exclude = collect($exclude);
 
-        return collect($this->router->getRoutes()->getRoutes())
-            ->filter(function (Route $route) use ($exclude, $include) {
-                $isExcluded = $exclude->some(fn (RouteFilter $filter) => $filter->matchesRoute($route));
+        return LazyCollection::make(function () use ($include, $exclude, $router) {
+            $routes = $router->getRoutes()->getRoutes();
 
-                if ($isExcluded) {
-                    return false;
+            for ($i = 0; $i < count($routes); $i++) {
+                $route = $routes[$i];
+
+                if (
+                    !$exclude->some(fn (RouteFilter $filter) => $filter->matchesRoute($route))
+                    && (
+                        $include->isEmpty()
+                        || $include->some(fn (RouteFilter $filter) => $filter->matchesRoute($route))
+                    )
+                ) {
+                    yield $route;
                 }
-
-                return $include->isEmpty() || $include->some(fn (RouteFilter $filter) => $filter->matchesRoute($route));
-            });
+            }
+        })
+            ->map(fn (Route $route) => [
+                $route->uri(),
+                $this->readRoute($route),
+                $route,
+            ]);
     }
 
     /**
@@ -154,34 +139,35 @@ class RouterToSwaggerAction
     /**
      * Export the current Swagger builder to the provided type.
      *
-     * @param int $type
+     * @param Builder $swagger
+     * @param int     $type
      *
      * @return string|array
+     * @throws UnsupportedSwaggerExportTypeException
      */
-    protected function export(int $type)
+    protected function export(Builder $swagger, int $type)
     {
         $this->validateType($type);
 
         switch ($type) {
             case self::TYPE_JSON:
-                return $this->swagger->toJson();
+                return $swagger->toJson();
             case self::TYPE_YAML:
-                return $this->swagger->toYaml();
+                return $swagger->toYaml();
             case self::TYPE_ARRAY:
             default:
-                return $this->swagger->toArray();
+                return $swagger->toArray();
         }
     }
 
     /**
-     * Add the given servers.
+     * Add the servers.
      *
+     * @param Builder  $swagger
      * @param Server[] $servers
-     *
-     * @return bool
      */
-    protected function addServers(array $servers): bool
+    protected function addServers(Builder $swagger, array $servers): void
     {
-        return array_walk($servers, fn (Server $server) => $this->swagger->addServer($server));
+        array_walk($servers, fn (Server $server) => $swagger->addServer($server));
     }
 }

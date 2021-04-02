@@ -14,11 +14,14 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
  */
 class ServiceProvider extends PackageServiceProvider
 {
-
+    /**
+     * @param Package $package
+     */
     public function configurePackage(Package $package): void
     {
         $package->name('swagger')
-                ->hasCommand(ExportSwaggerCommand::class)
-                ->hasCommand(FilterCheckCommand::class);
+            ->hasConfigFile('swagger')
+            ->hasCommand(ExportSwaggerCommand::class)
+            ->hasCommand(FilterCheckCommand::class);
     }
 }
