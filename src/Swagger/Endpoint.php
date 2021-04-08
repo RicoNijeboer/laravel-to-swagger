@@ -66,6 +66,7 @@ class Endpoint
     public function toArray(): array
     {
         $array = [
+            'summary' => $this->originalData->route()->uri(),
             'responses' => [
                 '200' => [
                     'description' => 'OK',

@@ -4,6 +4,7 @@ namespace Rico\Swagger;
 
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Rico\Swagger\Actions\RouterToOAuthConfig;
 use Rico\Swagger\Routing\RouteRegistrar;
 use Rico\Swagger\Support\RouteFilter;
@@ -27,6 +28,7 @@ class Swagger
     protected static array $include = [];
     /** @var RouteFilter[] */
     protected static array $exclude = [];
+    protected static $configUri = '/_swagger/config';
 
     /**
      * @param null  $callback
@@ -163,5 +165,19 @@ class Swagger
         }
 
         static::$oauthImplementation = $oauthImplementation;
+    }
+
+    /**
+     * @param string|null $uri
+     *
+     * @return string|void
+     */
+    public static function configUri(string $uri = null)
+    {
+        if (is_null($uri)) {
+            return static::$configUri;
+        }
+
+        static::$configUri = Str::startsWith($uri, ['http://', 'https://']) ? $uri : Str::start($uri, '/');
     }
 }

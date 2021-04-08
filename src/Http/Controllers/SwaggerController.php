@@ -7,10 +7,8 @@ use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Router;
 use ReflectionException;
-use Rico\Swagger\Actions\RouterToOAuthConfig;
 use Rico\Swagger\Actions\RouterToSwaggerAction;
 use Rico\Swagger\Exceptions\UnsupportedSwaggerExportTypeException;
-use Rico\Swagger\Support\RouteFilter;
 use Rico\Swagger\Swagger;
 
 /**
@@ -53,5 +51,14 @@ class SwaggerController extends Controller
                 'content-type' => 'text/yaml',
             ]
         );
+    }
+
+    public function redoc()
+    {
+        return response()->view('swagger::redoc', [
+            'title'        => config('swagger.title'),
+            'specUrl'      => Swagger::configUri(),
+            'redocVersion' => config('swagger.redoc.version'),
+        ]);
     }
 }

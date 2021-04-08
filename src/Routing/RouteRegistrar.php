@@ -2,7 +2,10 @@
 
 namespace Rico\Swagger\Routing;
 
+use Illuminate\Routing\Middleware\ValidateSignature;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\URL;
+use Rico\Swagger\Swagger;
 
 /**
  * Class RouteRegistrar
@@ -29,7 +32,26 @@ class RouteRegistrar
     public function forSwaggerConfig(): self
     {
         $this->router->name('config')
-            ->get('/config', 'SwaggerController@config');
+            ->get('config', 'SwaggerController@config');
+
+        return $this;
+    }
+
+    /**
+     * @param string $uri
+     *
+     * @return $this
+     */
+    public function forDocumentation(string $uri = '/documentation'): self
+    {
+        $configRoute = $this->router->name('documentation.config')
+            ->middleware(ValidateSignature::class)
+            ->get($uri . '/config', 'SwaggerController@config');
+
+        Swagger::configUri(URL::signedRoute($configRoute->getName()));
+
+        $this->router->name('documentation')
+            ->get($uri, 'SwaggerController@redoc');
 
         return $this;
     }
