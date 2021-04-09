@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Rico\Swagger\Actions\RouterToOAuthConfig;
 use Rico\Swagger\Routing\RouteRegistrar;
+use Rico\Swagger\Support\BaseNamespace;
 use Rico\Swagger\Support\RouteFilter;
 use Rico\Swagger\Swagger\Server;
 use Rico\Swagger\Swagger\Tag;
@@ -104,14 +105,27 @@ class Swagger
      * @param RouteFilter[]|null $include
      *
      * @return mixed|void
+     * @throws Exceptions\UnsupportedFilterTypeException
      */
     public static function include(array $include = null)
     {
-        if (is_null($include)) {
-            return static::$include;
+        if (!is_null($include)) {
+            static::$include = $include;
         }
 
-        static::$include = $include;
+        if (empty(static::$include)) {
+            /** @var BaseNamespace $baseNamespace */
+            $baseNamespace = app(BaseNamespace::class);
+
+            return [
+                new RouteFilter(
+                    RouteFilter::FILTER_TYPE_ACTION,
+                    $baseNamespace->namespace . '*'
+                ),
+            ];
+        }
+
+        return static::$include;
     }
 
     /**
@@ -126,11 +140,7 @@ class Swagger
         }
 
         if (empty(static::$exclude)) {
-            return [
-                new RouteFilter(RouteFilter::FILTER_TYPE_URI, '*telescope*'),
-                new RouteFilter(RouteFilter::FILTER_TYPE_URI, '*ignition*'),
-                new RouteFilter(RouteFilter::FILTER_TYPE_URI, '*swagger*'),
-            ];
+            return [];
         }
 
         return static::$exclude;
