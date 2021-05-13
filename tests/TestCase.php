@@ -19,14 +19,8 @@ class TestCase extends Orchestra
         parent::setUp();
 
         Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'Spatie\\Swagger\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
+            fn (string $modelName) => 'RicoNijeboer\\Swagger\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
         );
-    }
-
-    protected function tearDown(): void
-    {
-        TestController::reset();
-        parent::tearDown();
     }
 
     public function getEnvironmentSetUp($app)
@@ -37,6 +31,12 @@ class TestCase extends Orchestra
         (new \CreateSwaggerBatchesTable())->up();
         include_once __DIR__ . '/../database/migrations/create_swagger_entries_table.php.stub';
         (new \CreateSwaggerEntriesTable())->up();
+    }
+
+    protected function tearDown(): void
+    {
+        TestController::reset();
+        parent::tearDown();
     }
 
     protected function getPackageProviders($app)

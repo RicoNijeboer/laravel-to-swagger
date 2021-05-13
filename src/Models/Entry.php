@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Casts\ArrayObject;
 use Illuminate\Database\Eloquent\Casts\AsArrayObject;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use RicoNijeboer\Swagger\Database\Factories\EntryFactory;
 use RicoNijeboer\Swagger\Models\Contracts\Model;
 
 /**
@@ -15,6 +16,7 @@ use RicoNijeboer\Swagger\Models\Contracts\Model;
  * @property string      $type
  * @property ArrayObject $content
  * @property Batch       $batch
+ * @method static EntryFactory factory(...$parameters)
  */
 class Entry extends Model
 {

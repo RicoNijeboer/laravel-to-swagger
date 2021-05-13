@@ -27,16 +27,12 @@ class BatchFactory extends Factory
             'route_uri'        => $this->faker->slug(3),
             'route_name'       => str_replace('-', '.', $this->faker->url),
             'route_method'     => $this->faker->randomElement([
-                Request::METHOD_HEAD,
                 Request::METHOD_GET,
                 Request::METHOD_POST,
                 Request::METHOD_PUT,
                 Request::METHOD_PATCH,
                 Request::METHOD_DELETE,
-                Request::METHOD_PURGE,
                 Request::METHOD_OPTIONS,
-                Request::METHOD_TRACE,
-                Request::METHOD_CONNECT,
             ]),
             'route_middleware' => $this->faker->randomElements($kernel->getRouteMiddleware(), 3),
         ];

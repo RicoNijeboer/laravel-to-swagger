@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Validator;
 use Mockery\MockInterface;
 use RicoNijeboer\Swagger\Actions\ReadRouteInformationAction;
 use RicoNijeboer\Swagger\Middleware\SwaggerReader;
+use RicoNijeboer\Swagger\Models\Batch;
+use RicoNijeboer\Swagger\Support\Concerns\HelperMethods;
 use RicoNijeboer\Swagger\Support\ValidatorFactory;
 use RicoNijeboer\Swagger\Tests\TestCase;
 
@@ -18,6 +20,8 @@ use RicoNijeboer\Swagger\Tests\TestCase;
  */
 class SwaggerReaderTest extends TestCase
 {
+    use HelperMethods;
+
     /**
      * @test
      */
@@ -102,5 +106,57 @@ class SwaggerReaderTest extends TestCase
         $middleware = new SwaggerReader($readAction);
 
         $middleware->handle($request, $action);
+    }
+
+    /**
+     * @test
+     */
+    public function it_does_not_evaluate_if_there_is_a_batch_updated_within_the_configured_delay()
+    {
+        $batch = Batch::factory()->state(['updated_at' => now()])->create();
+
+        /** @var SwaggerReader $middleware */
+        $middleware = resolve(SwaggerReader::class);
+        $request = new Request();
+        $request->setMethod($batch->route_method);
+        $request->setRouteResolver(function () use ($batch) {
+            return Route::name($batch->route_name)
+                ->{strtolower($batch->route_method)}($batch->route_uri, fn () => response()->noContent())
+                ->middleware($batch->route_middleware);
+        });
+
+        $shouldEvaluate = $this->method($middleware, 'shouldEvaluate');
+
+        $this->assertFalse(
+            $shouldEvaluate->invoke($middleware, $request)
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_deletes_the_existing_batch_when_it_evaluates_the_new_request()
+    {
+        config()->set('swagger.evaluation-delay', 60); // Set the delay to 60 seconds.
+        $batch = Batch::factory()->state(['updated_at' => now()->subSeconds(120)])->create();
+
+        /** @var SwaggerReader $middleware */
+        $middleware = resolve(SwaggerReader::class);
+        $request = new Request();
+        $request->setMethod($batch->route_method);
+        $request->setRouteResolver(function () use ($batch) {
+            return Route::name($batch->route_name)
+                ->{strtolower($batch->route_method)}($batch->route_uri, fn () => response()->noContent())
+                ->middleware($batch->route_middleware);
+        });
+
+        $middleware->handle($request, fn () => response()->noContent());
+
+        $this->assertDatabaseMissing('swagger_batches', [
+            'id' => $batch->id,
+        ]);
+        $this->assertDatabaseMissing('swagger_entries', [
+            'swagger_batch_id' => $batch->id,
+        ]);
     }
 }
