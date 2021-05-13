@@ -33,5 +33,12 @@ return [
                 'description' => null,
             ],
         ],
+
+        'redoc' => [
+            /*
+             * Which version of Redoc to use.
+             */
+            'version' => 'v2.0.0-rc.53',
+        ],
     ],
 ];

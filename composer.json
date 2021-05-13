@@ -18,9 +18,10 @@
     "require": {
         "php": "^7.4",
         "ext-json": "*",
-        "spatie/laravel-package-tools": "^1.4.3",
         "illuminate/contracts": "^8.37",
-        "illuminate/database": "^8.37"
+        "illuminate/database": "^8.37",
+        "soapbox/laravel-formatter": "2.x",
+        "spatie/laravel-package-tools": "^1.4.3"
     },
     "require-dev": {
         "brianium/paratest": "^6.2",

@@ -11,6 +11,7 @@ class SwaggerServiceProvider extends PackageServiceProvider
     {
         $package
             ->name('laravel-to-swagger')
+            ->hasViews()
             ->hasConfigFile('swagger')
             ->hasMigration('create_swagger_batches_table')
             ->hasMigration('create_swagger_endpoints_table');
