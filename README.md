@@ -1,4 +1,7 @@
+# Version 2 of the package is still very much under development, please use v1 until further notice.
+<br><br><br><br><br><br><br><br>
 # Laravel to Swagger
+> Documentation of v1, I'll get to v2 docs when I do.
 
 Export your routes to a basic Swagger config the properties of your request (and their data types wherever I can).
 

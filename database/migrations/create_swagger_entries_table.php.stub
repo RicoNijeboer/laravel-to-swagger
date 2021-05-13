@@ -1,0 +1,27 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class CreateSwaggerEntriesTable extends Migration
+{
+    public function up()
+    {
+        Schema::create('swagger_entries', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('swagger_batch_id')->constrained();
+
+            $table->string('type')->index();
+            $table->json('content')->nullable();
+
+            $table->timestamps();
+        });
+    }
+
+    public function down()
+    {
+        Schema::dropIfExists('swagger_entries');
+    }
+}

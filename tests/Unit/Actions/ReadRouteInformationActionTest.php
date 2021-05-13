@@ -1,0 +1,194 @@
+<?php
+
+namespace RicoNijeboer\Swagger\Tests\Unit\Actions;
+
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Route;
+use RicoNijeboer\Swagger\Actions\ReadRouteInformationAction;
+use RicoNijeboer\Swagger\Models\Entry;
+use RicoNijeboer\Swagger\Tests\TestCase;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+
+/**
+ * Class ReadRouteInformationActionTest
+ *
+ * @package RicoNijeboer\Swagger\Tests\Unit\Actions
+ */
+class ReadRouteInformationActionTest extends TestCase
+{
+    /**
+     * @test
+     */
+    public function it_stores_a_batch_when_called()
+    {
+        $action = new ReadRouteInformationAction();
+        $request = new Request();
+        $request->server->set('REQUEST_METHOD', 'GET');
+
+        $action->read($request, Route::get('index', fn () => response()->noContent()), response()->noContent());
+
+        $this->assertDatabaseCount('swagger_batches', 1);
+        $this->assertDatabaseHas('swagger_batches', [
+            'route_name'   => null,
+            'route_uri'    => 'index',
+            'route_method' => 'GET',
+        ]);
+    }
+
+    /**
+     * @test
+     */
+    public function it_adds_the_route_name_to_the_batch_when_available()
+    {
+        $action = new ReadRouteInformationAction();
+        $request = new Request();
+        $request->server->set('REQUEST_METHOD', 'GET');
+        $route = Route::get('index', fn () => response()->noContent())
+            ->name('some.route.name');
+
+        $action->read($request, $route, response()->noContent());
+
+        $this->assertDatabaseCount('swagger_batches', 1);
+        $this->assertDatabaseHas('swagger_batches', [
+            'route_name'   => 'some.route.name',
+            'route_uri'    => 'index',
+            'route_method' => 'GET',
+        ]);
+    }
+
+    /**
+     * @test
+     */
+    public function it_only_stores_a_batch_for_the_called_method()
+    {
+        $action = new ReadRouteInformationAction();
+        $request = new Request();
+        $request->server->set('REQUEST_METHOD', 'HEAD');
+        $route = Route::get('index', fn () => response()->noContent());
+
+        $action->read($request, $route, response()->noContent());
+
+        $this->assertDatabaseCount('swagger_batches', 1);
+        $this->assertDatabaseHas('swagger_batches', [
+            'route_name'   => null,
+            'route_uri'    => 'index',
+            'route_method' => 'HEAD',
+        ]);
+        $this->assertDatabaseMissing('swagger_batches', [
+            'route_name'   => null,
+            'route_uri'    => 'index',
+            'route_method' => 'GET',
+        ]);
+    }
+
+    /**
+     * @test
+     * @dataProvider responses
+     */
+    public function it_stores_an_entry_for_the_response(Closure $responseClosure)
+    {
+        /** @var SymfonyResponse $response */
+        $response = $responseClosure();
+        $action = new ReadRouteInformationAction();
+        $request = new Request();
+        $request->server->set('REQUEST_METHOD', 'HEAD');
+        $route = Route::get('index', $responseClosure);
+
+        $action->read($request, $route, $response);
+
+        $this->assertDatabaseHas('swagger_entries', [
+            'type' => Entry::TYPE_RESPONSE,
+        ]);
+    }
+
+    /**
+     * @test
+     */
+    public function it_stores_an_entry_for_the_response_and_obfuscates_it()
+    {
+        $sentResponseArray = [
+            'id'            => 1,
+            'someDouble'    => 1337.14,
+            'someFloat'     => 1337.418484,
+            'name'          => 'foo',
+            'password'      => 'please dont send passwords in your API responses, thanks',
+            'someDateArray' => [
+                'birthday'    => '04-02-1998',
+                'datetime'    => '13-05-2021 08:51',
+                'isoDate'     => now()->toIsoString(),
+                'iso8601Date' => now()->toIso8601String(),
+            ],
+        ];
+        $response = response()->json($sentResponseArray)->prepare(new Request());
+        $action = new ReadRouteInformationAction();
+        $request = new Request();
+        $request->server->set('REQUEST_METHOD', 'HEAD');
+        $route = Route::get('index', fn () => $response);
+
+        $action->read($request, $route, $response);
+
+        /** @var Entry $responseEntry */
+        $responseEntry = Entry::query()->where('type', '=', Entry::TYPE_RESPONSE)->firstOrFail();
+
+        $storedResponseArray = json_decode($responseEntry->content['response'], true);
+
+        $this->recursively(
+            $storedResponseArray,
+            fn ($item, string $key) => $this->assertNotEquals(
+                Arr::get($sentResponseArray, $key),
+                $item,
+                "[{$key}] on the stored response equals the value that was sent in the response."
+            )
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_stores_an_entry_for_the_validation_rules()
+    {
+        $action = new ReadRouteInformationAction();
+        $request = new Request();
+        $request->server->set('REQUEST_METHOD', 'HEAD');
+        $route = Route::get('index', fn () => response()->noContent());
+        $rules = ['email' => ['email', 'required']];
+
+        $action->read($request, $route, response()->noContent(), $rules);
+
+        $this->assertDatabaseHas('swagger_entries', [
+            'type'    => Entry::TYPE_VALIDATION_RULES,
+            'content' => json_encode($rules),
+        ]);
+    }
+
+    /**
+     * @return Closure[][]
+     */
+    public function responses(): array
+    {
+        return [
+            'json'         => [
+                fn () => response()
+                    ->json([
+                        [
+                            'id'  => 1,
+                            'foo' => 'bar',
+                        ],
+                    ])
+                    ->prepare(new Request()),
+            ],
+            'noContent'    => [
+                fn () => response()
+                    ->noContent()
+                    ->prepare(new Request()),
+            ],
+            'html or view' => [
+                fn () => response()
+                    ->make('<h1>Hello world!</h1>')
+                    ->prepare(new Request()),
+            ],
+        ];
+    }
+}

@@ -1,43 +1,50 @@
 <?php
 
-namespace Rico\Swagger\Tests;
+namespace RicoNijeboer\Swagger\Tests;
 
-use Illuminate\Contracts\Config\Repository;
-use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Passport\Passport;
-use Laravel\Passport\PassportServiceProvider;
-use Orchestra\Testbench\TestCase as BaseTestCase;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Orchestra\Testbench\TestCase as Orchestra;
+use RicoNijeboer\Swagger\Providers\ValidationServiceProvider;
+use RicoNijeboer\Swagger\SwaggerServiceProvider;
+use RicoNijeboer\Swagger\Tests\app\Http\Controllers\TestController;
+use RicoNijeboer\Swagger\Tests\Concerns\HelperMethods;
+use Spatie\LaravelRay\RayServiceProvider;
 
-abstract class TestCase extends BaseTestCase
+class TestCase extends Orchestra
 {
-    use RefreshDatabase;
+    use HelperMethods;
 
-    /**
-     * @param Application $app
-     */
-    protected function getEnvironmentSetUp($app)
+    public function setUp(): void
     {
-        $config = $app->make(Repository::class);
+        parent::setUp();
 
-        $app['config']->set('database.default', 'testbench');
-
-        $app['config']->set('passport.storage.database.connection', 'testbench');
-
-        $app['config']->set('database.connections.testbench', [
-            'driver'   => 'sqlite',
-            'database' => ':memory:',
-            'prefix'   => '',
-        ]);
+        Factory::guessFactoryNamesUsing(
+            fn (string $modelName) => 'Spatie\\Swagger\\Database\\Factories\\' . class_basename($modelName) . 'Factory'
+        );
     }
 
-    /**
-     * @param Application $app
-     *
-     * @return array
-     */
+    protected function tearDown(): void
+    {
+        TestController::reset();
+        parent::tearDown();
+    }
+
+    public function getEnvironmentSetUp($app)
+    {
+        config()->set('database.default', 'testing');
+
+        include_once __DIR__ . '/../database/migrations/create_swagger_batches_table.php.stub';
+        (new \CreateSwaggerBatchesTable())->up();
+        include_once __DIR__ . '/../database/migrations/create_swagger_entries_table.php.stub';
+        (new \CreateSwaggerEntriesTable())->up();
+    }
+
     protected function getPackageProviders($app)
     {
-        return [];
+        return [
+            ValidationServiceProvider::class,
+            RayServiceProvider::class,
+            SwaggerServiceProvider::class,
+        ];
     }
 }
