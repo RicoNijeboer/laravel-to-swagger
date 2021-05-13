@@ -13,9 +13,9 @@ use RicoNijeboer\Swagger\Models\Contracts\Model;
  * Class Entry
  *
  * @package RicoNijeboer\Swagger\Models
- * @property string      $type
- * @property ArrayObject $content
- * @property Batch       $batch
+ * @property string            $type
+ * @property ArrayObject|array $content
+ * @property Batch             $batch
  * @method static EntryFactory factory(...$parameters)
  */
 class Entry extends Model
@@ -31,6 +31,6 @@ class Entry extends Model
 
     public function batch(): BelongsTo
     {
-        return $this->belongsTo(Batch::class, 'swagger_batch_id');
+        return $this->belongsTo(Batch::class);
     }
 }

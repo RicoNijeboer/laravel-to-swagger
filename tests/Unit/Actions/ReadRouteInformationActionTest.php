@@ -23,7 +23,8 @@ class ReadRouteInformationActionTest extends TestCase
      */
     public function it_stores_a_batch_when_called()
     {
-        $action = new ReadRouteInformationAction();
+        /** @var ReadRouteInformationAction $action */
+        $action = resolve(ReadRouteInformationAction::class);
         $request = new Request();
         $request->server->set('REQUEST_METHOD', 'GET');
 
@@ -31,9 +32,10 @@ class ReadRouteInformationActionTest extends TestCase
 
         $this->assertDatabaseCount('swagger_batches', 1);
         $this->assertDatabaseHas('swagger_batches', [
-            'route_name'   => null,
-            'route_uri'    => 'index',
-            'route_method' => 'GET',
+            'route_name'    => null,
+            'route_uri'     => 'index',
+            'route_method'  => 'GET',
+            'response_code' => 204,
         ]);
     }
 
@@ -42,7 +44,8 @@ class ReadRouteInformationActionTest extends TestCase
      */
     public function it_adds_the_route_name_to_the_batch_when_available()
     {
-        $action = new ReadRouteInformationAction();
+        /** @var ReadRouteInformationAction $action */
+        $action = resolve(ReadRouteInformationAction::class);
         $request = new Request();
         $request->server->set('REQUEST_METHOD', 'GET');
         $route = Route::get('index', fn () => response()->noContent())
@@ -63,7 +66,8 @@ class ReadRouteInformationActionTest extends TestCase
      */
     public function it_only_stores_a_batch_for_the_called_method()
     {
-        $action = new ReadRouteInformationAction();
+        /** @var ReadRouteInformationAction $action */
+        $action = resolve(ReadRouteInformationAction::class);
         $request = new Request();
         $request->server->set('REQUEST_METHOD', 'HEAD');
         $route = Route::get('index', fn () => response()->noContent());
@@ -91,7 +95,8 @@ class ReadRouteInformationActionTest extends TestCase
     {
         /** @var SymfonyResponse $response */
         $response = $responseClosure();
-        $action = new ReadRouteInformationAction();
+        /** @var ReadRouteInformationAction $action */
+        $action = resolve(ReadRouteInformationAction::class);
         $request = new Request();
         $request->server->set('REQUEST_METHOD', 'HEAD');
         $route = Route::get('index', $responseClosure);
@@ -122,7 +127,8 @@ class ReadRouteInformationActionTest extends TestCase
             ],
         ];
         $response = response()->json($sentResponseArray)->prepare(new Request());
-        $action = new ReadRouteInformationAction();
+        /** @var ReadRouteInformationAction $action */
+        $action = resolve(ReadRouteInformationAction::class);
         $request = new Request();
         $request->server->set('REQUEST_METHOD', 'HEAD');
         $route = Route::get('index', fn () => $response);
@@ -149,7 +155,8 @@ class ReadRouteInformationActionTest extends TestCase
      */
     public function it_stores_an_entry_for_the_validation_rules()
     {
-        $action = new ReadRouteInformationAction();
+        /** @var ReadRouteInformationAction $action */
+        $action = resolve(ReadRouteInformationAction::class);
         $request = new Request();
         $request->server->set('REQUEST_METHOD', 'HEAD');
         $route = Route::get('index', fn () => response()->noContent());

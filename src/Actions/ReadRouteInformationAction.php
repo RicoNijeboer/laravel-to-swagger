@@ -23,16 +23,17 @@ class ReadRouteInformationAction
 
     public function read(SymfonyRequest $request, Route $route, SymfonyResponse $response, array $rules = [])
     {
-        $batch = $this->createBatch(strtoupper($request->getMethod()), $route);
+        $batch = $this->createBatch(strtoupper($request->getMethod()), $route, $response);
 
         $rulesEntry = $this->createRulesEntry($batch, $rules);
         $responseEntry = $this->createResponseEntry($batch, $response);
     }
 
-    protected function createBatch(string $method, Route $route): Batch
+    protected function createBatch(string $method, Route $route, SymfonyResponse $response): Batch
     {
         $batch = new Batch();
 
+        $batch->response_code = $response->getStatusCode();
         $batch->route_method = strtoupper($method);
         $batch->route_uri = $route->uri();
         $batch->route_name = $route->getName();

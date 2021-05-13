@@ -8,11 +8,13 @@ use RicoNijeboer\Swagger\Providers\ValidationServiceProvider;
 use RicoNijeboer\Swagger\Support\Concerns\HelperMethods;
 use RicoNijeboer\Swagger\SwaggerServiceProvider;
 use RicoNijeboer\Swagger\Tests\app\Http\Controllers\TestController;
+use RicoNijeboer\Swagger\Tests\Concerns\CustomAssertions;
 use Spatie\LaravelRay\RayServiceProvider;
 
 class TestCase extends Orchestra
 {
-    use HelperMethods;
+    use HelperMethods,
+        CustomAssertions;
 
     public function setUp(): void
     {

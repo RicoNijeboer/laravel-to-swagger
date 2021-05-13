@@ -113,7 +113,7 @@ class SwaggerReaderTest extends TestCase
      */
     public function it_does_not_evaluate_if_there_is_a_batch_updated_within_the_configured_delay()
     {
-        $batch = Batch::factory()->state(['updated_at' => now()])->create();
+        $batch = Batch::factory(['response_code' => 204, 'updated_at' => now()])->create();
 
         /** @var SwaggerReader $middleware */
         $middleware = resolve(SwaggerReader::class);
@@ -128,7 +128,7 @@ class SwaggerReaderTest extends TestCase
         $shouldEvaluate = $this->method($middleware, 'shouldEvaluate');
 
         $this->assertFalse(
-            $shouldEvaluate->invoke($middleware, $request)
+            $shouldEvaluate->invoke($middleware, $request, response()->noContent())
         );
     }
 

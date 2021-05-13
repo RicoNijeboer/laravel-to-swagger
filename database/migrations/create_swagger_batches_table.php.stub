@@ -11,6 +11,7 @@ class CreateSwaggerBatchesTable extends Migration
         Schema::create('swagger_batches', function (Blueprint $table) {
             $table->id();
 
+            $table->integer('response_code');
             $table->string('route_method');
             $table->string('route_uri');
             $table->string('route_name')->nullable();
@@ -19,6 +20,7 @@ class CreateSwaggerBatchesTable extends Migration
             $table->timestamps();
 
             $table->unique([
+                'response_code',
                 'route_method',
                 'route_uri',
             ]);

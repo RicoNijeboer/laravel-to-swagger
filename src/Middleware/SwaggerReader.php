@@ -38,21 +38,20 @@ class SwaggerReader
      */
     public function handle(Request $request, Closure $next)
     {
-        $swaggerEnabled = $this->shouldEvaluate($request);
         $rules = [];
 
-        if ($swaggerEnabled) {
-            Validator::onValidate(function (array $addedRules, array $data = []) use (&$rules) {
-                $parsed = (new ValidationRuleParser($data))->explode($addedRules);
+        Validator::onValidate(function (array $addedRules, array $data = []) use (&$rules) {
+            $parsed = (new ValidationRuleParser($data))->explode($addedRules);
 
-                $rules = array_merge_recursive($rules, $parsed->rules);
-            });
-        }
+            $rules = array_merge_recursive($rules, $parsed->rules);
+        });
 
         $response = $next($request);
 
-        if ($swaggerEnabled) {
-            $this->deleteExistingBatch($request);
+        $shouldEvaluate = $this->shouldEvaluate($request, $response);
+
+        if ($shouldEvaluate) {
+            $this->deleteExistingBatch($request, $response);
             $this->read($request, $response, $rules);
         }
 
@@ -72,36 +71,39 @@ class SwaggerReader
     }
 
     /**
-     * @param Request $request
+     * @param Request  $request
+     * @param Response $response
      *
      * @return bool
      */
-    protected function shouldEvaluate(Request $request): bool
+    protected function shouldEvaluate(Request $request, Response $response): bool
     {
-        return $this->batchQuery($request)->doesntExist();
+        return $this->batchQuery($request, $response)->doesntExist();
     }
 
     /**
-     * @param Request $request
-     * @param bool    $between
+     * @param Request  $request
+     * @param Response $response
+     * @param bool     $between
      *
      * @return Builder
      */
-    protected function batchQuery(Request $request, bool $between = true): Builder
+    protected function batchQuery(Request $request, Response $response, bool $between = true): Builder
     {
         $delay = config('swagger.evaluation-delay', 43200);
 
-        return Batch::forRequest($request)
+        return Batch::forRequestAndResponse($request, $response)
             ->{$between ? 'whereBetween' : 'whereNotBetween'}('updated_at', [now()->subSeconds($delay), now()]);
     }
 
     /**
-     * @param Request $request
+     * @param Request  $request
+     * @param Response $response
      *
      * @return void
      */
-    protected function deleteExistingBatch(Request $request): void
+    protected function deleteExistingBatch(Request $request, Response $response): void
     {
-        $this->batchQuery($request, false)->delete();
+        $this->batchQuery($request, $response, false)->delete();
     }
 }
