@@ -4,6 +4,7 @@ namespace RicoNijeboer\Swagger\Models;
 
 use Illuminate\Database\Eloquent\Casts\ArrayObject;
 use Illuminate\Database\Eloquent\Casts\AsArrayObject;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use RicoNijeboer\Swagger\Models\Contracts\Model;
 
@@ -17,6 +18,8 @@ use RicoNijeboer\Swagger\Models\Contracts\Model;
  */
 class Entry extends Model
 {
+    use HasFactory;
+
     const TYPE_VALIDATION_RULES = 'validation/rules';
     const TYPE_RESPONSE = 'response';
 

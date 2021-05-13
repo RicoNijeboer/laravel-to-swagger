@@ -5,9 +5,9 @@ namespace RicoNijeboer\Swagger\Tests;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
 use RicoNijeboer\Swagger\Providers\ValidationServiceProvider;
+use RicoNijeboer\Swagger\Support\Concerns\HelperMethods;
 use RicoNijeboer\Swagger\SwaggerServiceProvider;
 use RicoNijeboer\Swagger\Tests\app\Http\Controllers\TestController;
-use RicoNijeboer\Swagger\Tests\Concerns\HelperMethods;
 use Spatie\LaravelRay\RayServiceProvider;
 
 class TestCase extends Orchestra

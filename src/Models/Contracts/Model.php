@@ -15,6 +15,11 @@ use Illuminate\Support\Carbon;
  */
 abstract class Model extends BaseModel
 {
+    public function getConnectionName()
+    {
+        return config('swagger.database.connection');
+    }
+
     public function getTable()
     {
         return $this->table ?? 'swagger_' . parent::getTable();

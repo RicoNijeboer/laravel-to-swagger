@@ -2,6 +2,10 @@
 
 namespace RicoNijeboer\Swagger\Support\Concerns;
 
+use ReflectionException;
+use ReflectionMethod;
+use ReflectionProperty;
+
 trait HelperMethods
 {
     /**
@@ -69,5 +73,37 @@ trait HelperMethods
         $date = preg_replace(array_keys($patterns), array_values($patterns), $date);
 
         return preg_match('/\d/', $date) ? false : $date;
+    }
+
+    /**
+     * @param string|object $on
+     * @param string|null   $method
+     *
+     * @return ReflectionMethod
+     * @throws ReflectionException
+     */
+    protected function method($on, ?string $method = null): ReflectionMethod
+    {
+        $method = new ReflectionMethod($on, $method);
+
+        $method->setAccessible(true);
+
+        return $method;
+    }
+
+    /**
+     * @param string|object $on
+     * @param string|null   $property
+     *
+     * @return ReflectionProperty
+     * @throws ReflectionException
+     */
+    protected function property($on, ?string $property = null): ReflectionProperty
+    {
+        $property = new ReflectionProperty($on, $property);
+
+        $property->setAccessible(true);
+
+        return $property;
     }
 }
