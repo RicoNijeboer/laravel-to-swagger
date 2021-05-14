@@ -69,7 +69,14 @@ class ValueHelper
             ];
         }
 
-        dd($value);
-        ray()->pause();
+        if (is_bool($value)) {
+            return [
+                'type' => 'boolean',
+            ];
+        }
+
+        return [
+            'type' => 'string',
+        ];
     }
 }
