@@ -1,13 +1,13 @@
 <?php
 
-namespace RicoNijeboer\Swagger\Tests\app\Http\Controllers;
+namespace RicoNijeboer\Swagger\Tests\App\Http\Controllers;
 
 use Illuminate\Routing\Controller;
 
 /**
  * Class TestController
  *
- * @package RicoNijeboer\Swagger\Tests\app\Http\Controllers
+ * @package RicoNijeboer\Swagger\Tests\App\Http\Controllers
  */
 class TestController extends Controller
 {
