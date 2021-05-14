@@ -14,7 +14,6 @@ class SwaggerServiceProvider extends PackageServiceProvider
     {
         $package
             ->name('swagger')
-            ->hasViews()
             ->hasConfigFile('swagger')
             ->hasMigration('create_swagger_batches_table')
             ->hasMigration('create_swagger_entries_table')
@@ -22,6 +21,7 @@ class SwaggerServiceProvider extends PackageServiceProvider
             ->hasMigration('create_swagger_batch_tag_table');
 
         $this->registerMiddleware();
+        $this->registerViews();
     }
 
     /**
@@ -52,5 +52,10 @@ class SwaggerServiceProvider extends PackageServiceProvider
         if (!in_array($openapiAlias, $existingAliases)) {
             $router->aliasMiddleware($openapiAlias, $class);
         }
+    }
+
+    protected function registerViews(): void
+    {
+        $this->loadViewsFrom($this->package->basePath('/../resources/views'), $this->package->shortName());
     }
 }

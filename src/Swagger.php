@@ -18,7 +18,7 @@ class Swagger
 
     public static function routes($callback = null, array $options = []): void
     {
-        $callback = $callback ?? fn (RouteRegistrar $registrar) => null;
+        $callback = $callback ?? fn (RouteRegistrar $registrar) => $registrar->forDocumentation();
 
         $defaultOptions = [
             'as'        => 'swagger.',

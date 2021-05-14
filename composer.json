@@ -1,10 +1,16 @@
 {
     "name": "riconijeboer/laravel-to-swagger",
-    "description": "This package aims to export your endpoints to Swagger YAML or JSON files.",
+    "description": "This package aims to bring you the easiest way to create a Swagger / OpenApi 3 config for your Laravel API's.",
     "keywords": [
         "riconijeboer",
         "laravel",
-        "laravel-to-swagger"
+        "laravel-to-swagger",
+        "swagger",
+        "openapi",
+        "laravel-to-openapi",
+        "api",
+        "documentation",
+        "laravel-documentation"
     ],
     "homepage": "https://github.com/riconijeboer/laravel-to-swagger",
     "license": "MIT",
@@ -20,8 +26,8 @@
         "ext-json": "*",
         "cerbero/lazy-json": "^1.1",
         "fakerphp/faker": "^1.14",
-        "illuminate/contracts": "^8.37",
-        "illuminate/database": "^8.37",
+        "illuminate/contracts": "^6|^7|^8",
+        "illuminate/database": "^6|^7|^8",
         "soapbox/laravel-formatter": "2.x",
         "spatie/laravel-package-tools": "^1.4.3"
     },
