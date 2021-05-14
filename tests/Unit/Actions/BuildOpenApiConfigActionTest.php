@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use RicoNijeboer\Swagger\Actions\BuildOpenApiConfigAction;
 use RicoNijeboer\Swagger\Models\Batch;
 use RicoNijeboer\Swagger\Models\Entry;
+use RicoNijeboer\Swagger\Models\Tag;
 use RicoNijeboer\Swagger\Tests\TestCase;
 
 class BuildOpenApiConfigActionTest extends TestCase
@@ -67,6 +68,10 @@ class BuildOpenApiConfigActionTest extends TestCase
                 'validationRulesEntry',
                 'responseEntry',
             ]);
+
+        /** @var Batch $firstBatch */
+        $firstBatch = $batches->first();
+        $firstBatch->tags()->save(Tag::factory()->create());
 
         /** @var BuildOpenApiConfigAction $action */
         $action = resolve(BuildOpenApiConfigAction::class);
@@ -257,5 +262,29 @@ class BuildOpenApiConfigActionTest extends TestCase
             ],
             $result
         );
+    }
+
+    /**
+     * @test
+     */
+    public function it_adds_the_tags_to_the_paths()
+    {
+        $batch = Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
+            ->has(Entry::factory()->validation())
+            ->has(Entry::factory()->response())
+            ->has(Tag::factory()->count(3))
+            ->create();
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+
+        $result = $action->build();
+
+        $path = Arr::get($result, 'paths./products.get');
+
+        $this->assertArrayHasKey('tags', $path);
+        $this->assertCount(3, $path['tags']);
+
+        $batch->tags->each(fn (Tag $tag) => $this->asserttrue(in_array($tag->tag, $path['tags'])));
     }
 }

@@ -21,7 +21,6 @@ class Swagger
         $callback = $callback ?? fn (RouteRegistrar $registrar) => null;
 
         $defaultOptions = [
-            'prefix'    => '/_swagger',
             'as'        => 'swagger.',
             'namespace' => '\Rico\Swagger\Http\Controllers',
         ];

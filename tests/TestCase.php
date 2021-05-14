@@ -34,6 +34,10 @@ class TestCase extends Orchestra
         (new \CreateSwaggerBatchesTable())->up();
         include_once __DIR__ . '/../database/migrations/create_swagger_entries_table.php.stub';
         (new \CreateSwaggerEntriesTable())->up();
+        include_once __DIR__ . '/../database/migrations/create_swagger_tags_table.php.stub';
+        (new \CreateSwaggerTagsTable())->up();
+        include_once __DIR__ . '/../database/migrations/create_swagger_batch_tag_table.php.stub';
+        (new \CreateSwaggerBatchTagTable())->up();
     }
 
     protected function tearDown(): void

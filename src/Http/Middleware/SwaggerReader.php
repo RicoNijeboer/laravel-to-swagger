@@ -1,6 +1,6 @@
 <?php
 
-namespace RicoNijeboer\Swagger\Middleware;
+namespace RicoNijeboer\Swagger\Http\Middleware;
 
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
@@ -9,7 +9,12 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationRuleParser;
 use RicoNijeboer\Swagger\Actions\ReadRouteInformationAction;
 use RicoNijeboer\Swagger\Models\Batch;
+use RicoNijeboer\Swagger\Models\Tag;
 use Symfony\Component\HttpFoundation\Response;
+
+use function collect;
+use function config;
+use function now;
 
 /**
  * Class SwaggerReader
@@ -31,12 +36,13 @@ class SwaggerReader
     }
 
     /**
-     * @param Request $request
-     * @param Closure $next
+     * @param Request         $request
+     * @param Closure         $next
+     * @param string|string[] ...$tags
      *
      * @return mixed
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next, ...$tags)
     {
         $rules = [];
 
@@ -54,6 +60,8 @@ class SwaggerReader
             $this->deleteExistingBatch($request, $response);
             $this->read($request, $response, $rules);
         }
+
+        $this->attachTags($request, $response, $tags);
 
         return $response;
     }
@@ -105,5 +113,24 @@ class SwaggerReader
     protected function deleteExistingBatch(Request $request, Response $response): void
     {
         $this->batchQuery($request, $response, false)->delete();
+    }
+
+    /**
+     * @param Request  $request
+     * @param Response $response
+     * @param array    $tags
+     */
+    protected function attachTags(Request $request, Response $response, array $tags): void
+    {
+        /** @var Batch $batch */
+        $batch = $this->batchQuery($request, $response)->first();
+
+        if (is_null($batch)) {
+            return;
+        }
+
+        $tags = collect($tags)->map(fn (string $tag) => Tag::query()->firstOrCreate(['tag' => $tag])->getKey());
+
+        $batch->tags()->sync($tags);
     }
 }

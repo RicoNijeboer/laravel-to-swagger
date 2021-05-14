@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Validator;
 use Mockery\MockInterface;
 use RicoNijeboer\Swagger\Actions\ReadRouteInformationAction;
-use RicoNijeboer\Swagger\Middleware\SwaggerReader;
+use RicoNijeboer\Swagger\Http\Middleware\SwaggerReader;
 use RicoNijeboer\Swagger\Models\Batch;
 use RicoNijeboer\Swagger\Support\Concerns\HelperMethods;
 use RicoNijeboer\Swagger\Support\ValidatorFactory;
@@ -158,5 +158,34 @@ class SwaggerReaderTest extends TestCase
         $this->assertDatabaseMissing('swagger_entries', [
             'swagger_batch_id' => $batch->id,
         ]);
+    }
+
+    /**
+     * @test
+     */
+    public function it_stores_the_tags_on_the_created_batch()
+    {
+        $response = response()->noContent();
+        $request = new Request();
+        $action = function () use ($response) {
+            Validator::make(['email' => 'rico@riconijeboer.nl'], ['email' => ['email', 'required']]);
+            Validator::make(['email' => 'rico@riconijeboer.nl'], ['name' => ['nullable']]);
+
+            return $response;
+        };
+        $request->setRouteResolver(fn () => Route::get('index', $action));
+
+        /** @var SwaggerReader $middleware */
+        $middleware = resolve(SwaggerReader::class);
+
+        $middleware->handle($request, $action, 'tag-one', 'tag-two');
+
+        $this->assertDatabaseHas('swagger_tags', ['tag' => 'tag-one']);
+        $this->assertDatabaseHas('swagger_tags', ['tag' => 'tag-two']);
+
+        /** @var Batch $batch */
+        $batch = Batch::query()->latest()->first();
+
+        $this->assertCount(2, $batch->tags);
     }
 }

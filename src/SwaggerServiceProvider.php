@@ -3,7 +3,7 @@
 namespace RicoNijeboer\Swagger;
 
 use Illuminate\Routing\Router;
-use RicoNijeboer\Swagger\Middleware\SwaggerReader;
+use RicoNijeboer\Swagger\Http\Middleware\SwaggerReader;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -16,7 +16,9 @@ class SwaggerServiceProvider extends PackageServiceProvider
             ->hasViews()
             ->hasConfigFile('swagger')
             ->hasMigration('create_swagger_batches_table')
-            ->hasMigration('create_swagger_entries_table');
+            ->hasMigration('create_swagger_entries_table')
+            ->hasMigration('create_swagger_tags_table')
+            ->hasMigration('create_swagger_batch_tag_table');
 
         $this->registerMiddleware();
     }

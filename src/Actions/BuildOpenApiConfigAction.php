@@ -119,6 +119,10 @@ class BuildOpenApiConfigAction
             ];
         }
 
+        if ($batch->tags()->exists()) {
+            $batchConfig['tags'] = $batch->tags->pluck('tag')->toArray();
+        }
+
         if (count($batch->validationRulesEntry->content) > 0) {
             // It has request body.
             $batchConfig['requestBody'] = [
