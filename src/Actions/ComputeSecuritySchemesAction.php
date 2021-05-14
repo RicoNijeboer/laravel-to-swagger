@@ -28,7 +28,7 @@ class ComputeSecuritySchemesAction
         $this->router = $router;
     }
 
-    public function oAuth2(): ?array
+    public function oAuth2Schemes(): ?array
     {
         $schemes = [];
         $guards = $this->guards(fn (array $guard, string $name) => $guard['driver'] === 'passport');
@@ -69,6 +69,8 @@ class ComputeSecuritySchemesAction
      */
     protected function oauthScheme(array &$schemes, string $name, array $guard): void
     {
+        $guardName = "Guard: {$name}";
+
         $hasTokenUrl = $this->router->has(self::PASSPORT_TOKEN_ROUTE_NAME);
         $hasAuthorizationUrl = $this->router->has(self::PASSPORT_AUTHORIZATIONS_AUTHORIZE_ROUTE_NAME);
 
@@ -80,7 +82,7 @@ class ComputeSecuritySchemesAction
         $clients = Passport::client()->newQuery()->get();
         $scopes = Passport::scopes()->mapWithKeys(fn (Scope $scope) => [$scope->id => $scope->description])->all();
 
-        $schemes["Guard: {$name}"] = [
+        $schemes[$guardName] = [
             'type'  => 'oauth2',
             'flows' => [
                 'password'          => [
@@ -113,7 +115,7 @@ class ComputeSecuritySchemesAction
 
         foreach ($checkEnabled as $flow => $enabled) {
             if (!$enabled) {
-                unset($schemes[$name]['flows'][$flow]);
+                unset($schemes[$guardName]['flows'][$flow]);
             }
         }
     }

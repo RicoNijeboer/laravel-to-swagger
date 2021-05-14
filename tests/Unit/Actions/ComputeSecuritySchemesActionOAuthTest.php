@@ -30,19 +30,20 @@ class ComputeSecuritySchemesActionOAuthTest extends TestCase
             ],
         ]);
         Passport::$implicitGrantEnabled = false;
+        Passport::client()->delete();
 
-        $oAuthSchemes = $action->oAuth2();
+        $oAuthSchemes = $action->oAuth2Schemes();
 
         $this->assertNotNull($oAuthSchemes);
         $this->assertArrayHasKeys(
             [
-                'api.type' => 'oauth2',
-                'api.flows',
+                'Guard: api.type' => 'oauth2',
+                'Guard: api.flows',
             ],
             $oAuthSchemes
         );
-        $this->assertIsArray($oAuthSchemes['api']['flows']);
-        $this->assertEmpty($oAuthSchemes['api']['flows']);
+        $this->assertIsArray($oAuthSchemes['Guard: api']['flows']);
+        $this->assertEmpty($oAuthSchemes['Guard: api']['flows']);
     }
 
     /**
@@ -63,13 +64,13 @@ class ComputeSecuritySchemesActionOAuthTest extends TestCase
         $clientRepository = resolve(ClientRepository::class);
         $clientRepository->createPasswordGrantClient(null, 'Password client', 'http://localhost', 'users');
 
-        $oauthSchemes = $action->oAuth2();
+        $oauthSchemes = $action->oAuth2Schemes();
 
         $this->assertArrayHasKeys(
             [
-                'api.type' => 'oauth2',
-                'api.flows.password.tokenUrl',
-                'api.flows.password.scopes',
+                'Guard: api.type' => 'oauth2',
+                'Guard: api.flows.password.tokenUrl',
+                'Guard: api.flows.password.scopes',
             ],
             $oauthSchemes
         );
@@ -93,13 +94,13 @@ class ComputeSecuritySchemesActionOAuthTest extends TestCase
         $clientRepository = resolve(ClientRepository::class);
         $clientRepository->create(null, 'Client Credentials Client', '');
 
-        $oauthSchemes = $action->oAuth2();
+        $oauthSchemes = $action->oAuth2Schemes();
 
         $this->assertArrayHasKeys(
             [
-                'api.type' => 'oauth2',
-                'api.flows.clientCredentials.tokenUrl',
-                'api.flows.clientCredentials.scopes',
+                'Guard: api.type' => 'oauth2',
+                'Guard: api.flows.clientCredentials.tokenUrl',
+                'Guard: api.flows.clientCredentials.scopes',
             ],
             $oauthSchemes
         );
@@ -121,14 +122,14 @@ class ComputeSecuritySchemesActionOAuthTest extends TestCase
         Passport::routes();
         Passport::enableImplicitGrant();
 
-        $oauthSchemes = $action->oAuth2();
+        $oauthSchemes = $action->oAuth2Schemes();
 
         $this->assertArrayHasKeys(
             [
-                'api.type' => 'oauth2',
-                'api.flows.implicit.tokenUrl',
-                'api.flows.implicit.authorizationUrl',
-                'api.flows.implicit.scopes',
+                'Guard: api.type' => 'oauth2',
+                'Guard: api.flows.implicit.tokenUrl',
+                'Guard: api.flows.implicit.authorizationUrl',
+                'Guard: api.flows.implicit.scopes',
             ],
             $oauthSchemes
         );
@@ -155,14 +156,14 @@ class ComputeSecuritySchemesActionOAuthTest extends TestCase
             null, 'Auth code client', URL::to('/auth/callback')
         );
 
-        $oauthSchemes = $action->oAuth2();
+        $oauthSchemes = $action->oAuth2Schemes();
 
         $this->assertArrayHasKeys(
             [
-                'api.type' => 'oauth2',
-                'api.flows.authorizationCode.tokenUrl',
-                'api.flows.authorizationCode.authorizationUrl',
-                'api.flows.authorizationCode.scopes',
+                'Guard: api.type' => 'oauth2',
+                'Guard: api.flows.authorizationCode.tokenUrl',
+                'Guard: api.flows.authorizationCode.authorizationUrl',
+                'Guard: api.flows.authorizationCode.scopes',
             ],
             $oauthSchemes
         );
@@ -191,12 +192,12 @@ class ComputeSecuritySchemesActionOAuthTest extends TestCase
             'Scope2' => 'Electric boogaloo',
         ]);
 
-        $oauthSchemes = $action->oAuth2();
+        $oauthSchemes = $action->oAuth2Schemes();
 
         $this->assertArrayHasKeys(
             [
-                'api.flows.password.scopes.Scope'  => 'Scope it all',
-                'api.flows.password.scopes.Scope2' => 'Electric boogaloo',
+                'Guard: api.flows.password.scopes.Scope'  => 'Scope it all',
+                'Guard: api.flows.password.scopes.Scope2' => 'Electric boogaloo',
             ],
             $oauthSchemes
         );

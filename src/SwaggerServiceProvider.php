@@ -4,6 +4,7 @@ namespace RicoNijeboer\Swagger;
 
 use Illuminate\Routing\Router;
 use RicoNijeboer\Swagger\Http\Middleware\SwaggerReader;
+use RicoNijeboer\Swagger\Http\Middleware\SwaggerTag;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -28,16 +29,28 @@ class SwaggerServiceProvider extends PackageServiceProvider
      */
     protected function registerMiddleware(): void
     {
+        $this->aliasMiddleware('tag', SwaggerTag::class);
+        $this->aliasMiddleware('reader', SwaggerReader::class);
+    }
+
+    /**
+     * @param string $alias
+     * @param string $class
+     */
+    protected function aliasMiddleware(string $alias, string $class)
+    {
         /** @var Router $router */
         $router = $this->app['router'];
-
         $existingAliases = array_keys($router->getMiddleware());
 
-        if (!in_array('swagger', $existingAliases)) {
-            $router->aliasMiddleware('swagger', SwaggerReader::class);
+        $swaggerAlias = 'swagger_' . $alias;
+        $openapiAlias = 'openapi_' . $alias;
+
+        if (!in_array($swaggerAlias, $existingAliases)) {
+            $router->aliasMiddleware($swaggerAlias, $class);
         }
-        if (!in_array('openapi', $existingAliases)) {
-            $router->aliasMiddleware('openapi', SwaggerReader::class);
+        if (!in_array($openapiAlias, $existingAliases)) {
+            $router->aliasMiddleware($openapiAlias, $class);
         }
     }
 }

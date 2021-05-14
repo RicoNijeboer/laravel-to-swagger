@@ -31,7 +31,7 @@ class BuildOpenApiConfigAction
             'servers' => $this->getServers(),
         ];
 
-        $oAuth2Schemes = $this->securitySchemes->oAuth2();
+        $oAuth2Schemes = $this->securitySchemes->oAuth2Schemes();
 
         if (!is_null($oAuth2Schemes)) {
             Arr::set($openApi, 'components.securitySchemes', $oAuth2Schemes);
