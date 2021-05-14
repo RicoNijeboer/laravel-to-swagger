@@ -82,6 +82,10 @@ composer test
 - [Rico Nijeboer](https://github.com/RicoNijeboer/)
 - [All Contributors](https://github.com/RicoNijeboer/laravel-to-swagger/graphs/contributors)
 
+## License
+
+The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+
 ## Changes since version 1
 
 When version 1 would create a Swagger config, it generated it by reading all the registered Routes that match the filters (defined by the developers). This worked fine, except there were a few hacks I
@@ -93,8 +97,3 @@ same data formats, although I may have missed one.
 (If you find one feel free to make a Pull Request or Issue, and I'll get to it).
 
 With version 2 gone are all the filters that you had to define; You add the middleware and tag through the middleware. That's it.
-
-
-## License
-
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
