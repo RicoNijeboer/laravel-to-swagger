@@ -184,9 +184,14 @@ class RuleHelper
             ]);
         }
 
-        if (count($rules) === 1 && array_keys($rules)[0] === '*') {
-            $arrayRules = $ruleCache[$property] ?? [];
-            unset($rules['rules']);
+        $rulesHasStar = !empty(Arr::where(array_keys($rules), fn (string $key) => $key === '*'));
+
+        if ($rulesHasStar || in_array('array', $rules)) {
+            $childRules = $rules['*'] ?? [];
+
+            if (array_key_exists('*', $rules)) {
+                unset($rules['*']);
+            }
 
             return array_merge(
                 [
@@ -202,11 +207,11 @@ class RuleHelper
                                 ->map(fn (array $r, string $key) => static::openApiProperty($key, $r, $ruleCache))
                                 ->toArray(),
                         ];
-                    })($rules, $ruleCache),
+                    })(['*' => $childRules], $ruleCache),
                 ],
                 array_filter([
-                    'minItems' => static::min($arrayRules),
-                    'maxItems' => static::max($arrayRules),
+                    'minItems' => static::min($rules),
+                    'maxItems' => static::max($rules),
                 ])
             );
         }

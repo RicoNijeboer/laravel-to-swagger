@@ -22,7 +22,7 @@ class BuildOpenApiConfigAction
         $this->securitySchemes = $securitySchemes;
     }
 
-    public function build()
+    public function build(): array
     {
         $openApi = [
             'openapi' => '3.0.0',

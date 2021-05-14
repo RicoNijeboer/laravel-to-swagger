@@ -68,22 +68,19 @@ class PathData
     protected function calculateProperties(Batch $batch): self
     {
         $ruleCache = [];
+        $rules = [];
 
-        $rules = $batch->validationRulesEntry->content->collect()
-            ->mapWithKeys(function (array $rules, string $property) use (&$ruleCache) {
-                $arr = [$property => $rules];
+        foreach ($batch->validationRulesEntry->content->collect() as $property => $propertyRules) {
+            Arr::set($rules, $property, $propertyRules);
 
-                if (Str::contains($property, '.')) {
-                    $arr = [];
-                    Arr::set($arr, $property, $rules);
-                }
+            if (Str::contains($property, '.')) {
+                Arr::set($rules, $property, $propertyRules);
+            }
 
-                $ruleCache[$property] = $rules;
+            $ruleCache[$property] = $propertyRules;
+        }
 
-                return $arr;
-            });
-
-        $this->properties = $rules
+        $this->properties = collect($rules)
             ->map(fn (array $rules, string $property) => RuleHelper::openApiProperty($property, $rules, $ruleCache))
             ->toArray();
 

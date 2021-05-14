@@ -25,13 +25,16 @@ class PathDataTest extends TestCase
             ->has(Entry::factory([
                 'type'    => Entry::TYPE_VALIDATION_RULES,
                 'content' => [
-                    'email'        => ['required', 'email'],
-                    'name'         => ['nullable', 'string'],
-                    'birthday'     => ['required', 'date_format:d-m-Y'],
-                    'country.code' => ['required'],
-                    'items'        => ['array', 'min:2', 'max:10'],
-                    'items.*.code' => ['required', 'min:2', 'max:2'],
-                    'products.*'   => ['required'],
+                    'email'                    => ['required', 'email'],
+                    'name'                     => ['nullable', 'string'],
+                    'birthday'                 => ['required', 'date_format:d-m-Y'],
+                    'country.code'             => ['required'],
+                    'items'                    => ['array', 'min:2', 'max:10'],
+                    'items.*.code'             => ['required', 'min:2', 'max:2'],
+                    'products.*'               => ['required'],
+                    'order.id'                 => ['required'],
+                    'order.address.address'    => ['required'],
+                    'order.address.postalCode' => ['required'],
                 ],
             ]))
             ->create();
@@ -57,6 +60,11 @@ class PathDataTest extends TestCase
                 'items.items.properties.code.minimum' => 2,
                 'items.items.properties.code.maximum' => 2,
                 'products.type'                       => 'array',
+
+                'order.type'                                          => 'object',
+                'order.properties.id.type'                            => 'string',
+                'order.properties.address.properties.address.type'    => 'string',
+                'order.properties.address.properties.postalCode.type' => 'string',
             ],
             $properties
         );
