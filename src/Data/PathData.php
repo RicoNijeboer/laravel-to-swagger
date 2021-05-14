@@ -71,11 +71,7 @@ class PathData
         $rules = [];
 
         foreach ($batch->validationRulesEntry->content->collect() as $property => $propertyRules) {
-            Arr::set($rules, $property, $propertyRules);
-
-            if (Str::contains($property, '.')) {
-                Arr::set($rules, $property, $propertyRules);
-            }
+            Arr::set($rules, preg_replace('/\.[0-9]+\./m', '.*.', $property), $propertyRules);
 
             $ruleCache[$property] = $propertyRules;
         }
