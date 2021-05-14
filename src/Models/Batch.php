@@ -5,6 +5,7 @@ namespace RicoNijeboer\Swagger\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\Request;
@@ -24,6 +25,7 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
  * @property Collection|Entry[] $entries
  * @property Entry              $validationRulesEntry
  * @property Entry              $responseEntry
+ * @property Collection|Tag[] $tags
  * @method static BatchFactory factory(...$parameters)
  * @method static Builder forRequestAndResponse(Request $request, SymfonyResponse $response)
  */
@@ -42,6 +44,14 @@ class Batch extends Model
     public function entries(): HasMany
     {
         return $this->hasMany(Entry::class);
+    }
+
+    /**
+     * @return BelongsToMany
+     */
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class, 'swagger_batch_tag');
     }
 
     /**

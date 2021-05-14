@@ -3,6 +3,7 @@
 namespace RicoNijeboer\Swagger\Actions;
 
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
 use Illuminate\Support\LazyCollection;
 use RicoNijeboer\Swagger\Data\PathData;
 use RicoNijeboer\Swagger\Models\Batch;
@@ -14,14 +15,29 @@ use RicoNijeboer\Swagger\Models\Batch;
  */
 class BuildOpenApiConfigAction
 {
+    private ComputeSecuritySchemesAction $securitySchemes;
+
+    public function __construct(ComputeSecuritySchemesAction $securitySchemes)
+    {
+        $this->securitySchemes = $securitySchemes;
+    }
+
     public function build()
     {
-        return [
+        $openApi = [
             'openapi' => '3.0.0',
             'info'    => $this->getInfo(),
             'paths'   => $this->getPaths(),
             'servers' => $this->getServers(),
         ];
+
+        $oAuth2Schemes = $this->securitySchemes->oAuth2Schemes();
+
+        if (!is_null($oAuth2Schemes)) {
+            Arr::set($openApi, 'components.securitySchemes', $oAuth2Schemes);
+        }
+
+        return $openApi;
     }
 
     /**
@@ -117,6 +133,10 @@ class BuildOpenApiConfigAction
                     'schema' => $pathData->response['schema'],
                 ],
             ];
+        }
+
+        if ($batch->tags()->exists()) {
+            $batchConfig['tags'] = $batch->tags->pluck('tag')->toArray();
         }
 
         if (count($batch->validationRulesEntry->content) > 0) {

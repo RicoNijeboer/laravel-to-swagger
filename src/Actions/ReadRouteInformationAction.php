@@ -21,6 +21,13 @@ class ReadRouteInformationAction
 {
     use HelperMethods;
 
+    private ObfuscateJsonAction $obfuscate;
+
+    public function __construct(ObfuscateJsonAction $obfuscate)
+    {
+        $this->obfuscate = $obfuscate;
+    }
+
     public function read(SymfonyRequest $request, Route $route, SymfonyResponse $response, array $rules = [])
     {
         $batch = $this->createBatch(strtoupper($request->getMethod()), $route, $response);
@@ -84,15 +91,7 @@ class ReadRouteInformationAction
         $contentType = $response->headers->get('Content-Type');
 
         if (Str::contains($contentType, 'application/json')) {
-            $obfuscated = [];
-
-            $this->recursively(json_decode($responseContent, true), function ($item, $key) use (&$obfuscated) {
-                if (!is_array($item)) {
-                    Arr::set($obfuscated, $key, $this->obfuscate($item));
-                }
-            });
-
-            $responseContent = json_encode($obfuscated);
+            $responseContent = $this->obfuscate->obfuscateJson($responseContent);
         }
 
         return $responseContent;

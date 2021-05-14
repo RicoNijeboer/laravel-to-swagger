@@ -1,14 +1,13 @@
 <?php
 
-namespace RicoNijeboer\Swagger\Middleware;
+namespace RicoNijeboer\Swagger\Http\Middleware;
 
 use Closure;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationRuleParser;
 use RicoNijeboer\Swagger\Actions\ReadRouteInformationAction;
-use RicoNijeboer\Swagger\Models\Batch;
+use RicoNijeboer\Swagger\Http\Middleware\Concerns\AttachesTagsToBatches;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -18,6 +17,8 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class SwaggerReader
 {
+    use AttachesTagsToBatches;
+
     protected ReadRouteInformationAction $readRouteInformationAction;
 
     /**
@@ -31,12 +32,13 @@ class SwaggerReader
     }
 
     /**
-     * @param Request $request
-     * @param Closure $next
+     * @param Request         $request
+     * @param Closure         $next
+     * @param string|string[] ...$tags
      *
      * @return mixed
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next, ...$tags)
     {
         $rules = [];
 
@@ -54,6 +56,8 @@ class SwaggerReader
             $this->deleteExistingBatch($request, $response);
             $this->read($request, $response, $rules);
         }
+
+        $this->attachTags($request, $response, $tags);
 
         return $response;
     }
@@ -79,21 +83,6 @@ class SwaggerReader
     protected function shouldEvaluate(Request $request, Response $response): bool
     {
         return $this->batchQuery($request, $response)->doesntExist();
-    }
-
-    /**
-     * @param Request  $request
-     * @param Response $response
-     * @param bool     $between
-     *
-     * @return Builder
-     */
-    protected function batchQuery(Request $request, Response $response, bool $between = true): Builder
-    {
-        $delay = config('swagger.evaluation-delay', 43200);
-
-        return Batch::forRequestAndResponse($request, $response)
-            ->{$between ? 'whereBetween' : 'whereNotBetween'}('updated_at', [now()->subSeconds($delay), now()]);
     }
 
     /**

@@ -18,6 +18,12 @@ class ValueHelper
      */
     public static function jsonResponseProperty($value): array
     {
+        if (is_null($value)) {
+            return [
+                'nullable' => true,
+            ];
+        }
+
         if (is_array($value)) {
             if (Arr::isAssoc($value)) {
                 return [
@@ -62,5 +68,8 @@ class ValueHelper
                 'type' => 'string',
             ];
         }
+
+        dd($value);
+        ray()->pause();
     }
 }
