@@ -30,6 +30,6 @@ class RouteRegistrar
         Swagger::configRoute($openApiConfigRoute);
 
         $this->router->name('documentation.redoc')
-            ->get($uri, [OpenApiController::class, 'redoc']);
+            ->get($uri, [OpenApiController::class, 'docs']);
     }
 }
