@@ -16,7 +16,7 @@
         }
     ],
     "require": {
-        "php": "^7.4",
+        "php": "^7.4|^8.0",
         "ext-json": "*",
         "cerbero/lazy-json": "^1.1",
         "fakerphp/faker": "^1.14",
