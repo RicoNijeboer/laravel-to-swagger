@@ -29,7 +29,13 @@ class SwaggerServiceProvider extends PackageServiceProvider
         /** @var Router $router */
         $router = $this->app['router'];
 
-        $router->aliasMiddleware('swagger', SwaggerReader::class);
-        $router->aliasMiddleware('openapi', SwaggerReader::class);
+        $existingAliases = array_keys($router->getMiddleware());
+
+        if (!in_array('swagger', $existingAliases)) {
+            $router->aliasMiddleware('swagger', SwaggerReader::class);
+        }
+        if (!in_array('openapi', $existingAliases)) {
+            $router->aliasMiddleware('openapi', SwaggerReader::class);
+        }
     }
 }
