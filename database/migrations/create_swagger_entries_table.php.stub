@@ -11,7 +11,7 @@ class CreateSwaggerEntriesTable extends Migration
         Schema::create('swagger_entries', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('batch_id')->constrained();
+            $table->foreignId('batch_id')->constrained('swagger_batches', 'id');
 
             $table->string('type')->index();
             $table->json('content')->nullable();

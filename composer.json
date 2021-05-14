@@ -51,7 +51,8 @@
     "extra": {
         "laravel": {
             "providers": [
-                "RicoNijeboer\\Swagger\\SwaggerServiceProvider"
+                "RicoNijeboer\\Swagger\\SwaggerServiceProvider",
+                "RicoNijeboer\\Swagger\\Providers\\ValidationServiceProvider"
             ]
         }
     },
