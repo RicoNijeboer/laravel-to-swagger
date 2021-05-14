@@ -18,6 +18,8 @@
     "require": {
         "php": "^7.4",
         "ext-json": "*",
+        "cerbero/lazy-json": "^1.1",
+        "fakerphp/faker": "^1.14",
         "illuminate/contracts": "^8.37",
         "illuminate/database": "^8.37",
         "soapbox/laravel-formatter": "2.x",

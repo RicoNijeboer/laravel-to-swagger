@@ -32,17 +32,15 @@ class HelperMethodsTest extends TestCase
         $expectedKeys = [
             'id',
             'name',
-            'job',
             'job.title',
-            'job.location',
             'job.location.country',
         ];
 
         $actualKeys = [];
 
-        $this->recursively($array, function ($_, $key) use (&$actualKeys) {
+        foreach ($this->recursively($array) as [, $key]) {
             $actualKeys[] = $key;
-        });
+        }
 
         $this->assertSameSize($expectedKeys, $actualKeys);
         $this->assertEquals($expectedKeys, $actualKeys);

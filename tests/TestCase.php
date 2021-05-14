@@ -2,6 +2,7 @@
 
 namespace RicoNijeboer\Swagger\Tests;
 
+use Cerbero\LazyJson\Providers\LazyJsonServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
 use RicoNijeboer\Swagger\Providers\ValidationServiceProvider;
@@ -44,9 +45,10 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app)
     {
         return [
-            ValidationServiceProvider::class,
             RayServiceProvider::class,
+            LazyJsonServiceProvider::class,
             SwaggerServiceProvider::class,
+            ValidationServiceProvider::class,
         ];
     }
 }

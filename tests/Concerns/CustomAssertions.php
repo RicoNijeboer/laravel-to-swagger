@@ -49,12 +49,6 @@ trait CustomAssertions
     {
         foreach ($keys as $_ => $key) {
             if (is_string($_)) {
-                $has = Arr::has($array, $_);
-
-                $this->assertFalse(
-                    $has,
-                    "Failed asserting that array doesn't have key [{$_}]"
-                );
                 $this->assertNotEquals(
                     $key,
                     Arr::get($array, $_),

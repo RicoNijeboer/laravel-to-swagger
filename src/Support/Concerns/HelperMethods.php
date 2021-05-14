@@ -2,6 +2,8 @@
 
 namespace RicoNijeboer\Swagger\Support\Concerns;
 
+use Generator;
+use Illuminate\Support\Arr;
 use ReflectionException;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -9,20 +11,24 @@ use ReflectionProperty;
 trait HelperMethods
 {
     /**
-     * @param array    $array
-     * @param callable $callback
-     * @param string   $keyPrefix
+     * @param array  $array
+     * @param string $keyPrefix
+     *
+     * @return Generator
      */
-    protected function recursively(array $array, callable $callback, string $keyPrefix = ''): void
+    protected function recursively(array $array, string $keyPrefix = ''): Generator
     {
         foreach ($array as $key => $item) {
-            $keyWithPrefix = implode('.', array_filter([$keyPrefix, $key]));
-
-            $callback($item, $keyWithPrefix);
+            $keyWithPrefix = implode('.', array_filter([$keyPrefix, $key], fn(string $k) => strlen($k) > 0));
 
             if (is_array($item)) {
-                $this->recursively($item, $callback, $keyWithPrefix);
+                foreach ($this->recursively($item, $keyWithPrefix) as [$subItem, $subItemKey]) {
+                    yield [$subItem, $subItemKey];
+                }
+                continue;
             }
+
+            yield [$item, $keyWithPrefix];
         }
     }
 
@@ -69,9 +75,8 @@ trait HelperMethods
 
             '/\.\d{3}\b/' => '.v',
         ];
-        $date = preg_replace('/\b\d{2}:\d{2}\b/', 'H:i', $date);
         $date = preg_replace(array_keys($patterns), array_values($patterns), $date);
-
+ray($date);
         return preg_match('/\d/', $date) ? false : $date;
     }
 

@@ -140,14 +140,13 @@ class ReadRouteInformationActionTest extends TestCase
 
         $storedResponseArray = json_decode($responseEntry->content['response'], true);
 
-        $this->recursively(
-            $storedResponseArray,
-            fn ($item, string $key) => $this->assertNotEquals(
+        foreach ($this->recursively($storedResponseArray) as [$item, $key]) {
+            $this->assertNotEquals(
                 Arr::get($sentResponseArray, $key),
                 $item,
                 "[{$key}] on the stored response equals the value that was sent in the response."
-            )
-        );
+            );
+        }
     }
 
     /**
