@@ -71,9 +71,16 @@ class PathData
         $rules = [];
 
         foreach ($batch->validationRulesEntry->content->collect() as $property => $propertyRules) {
-            Arr::set($rules, preg_replace('/\.[0-9]+\./m', '.*.', $property), $propertyRules);
+            $filtered = array_filter($propertyRules, fn ($rule) => !is_array($rule));
+            $starProp = preg_replace('/\.[0-9]+/m', '.*', $property);
 
-            $ruleCache[$property] = $propertyRules;
+            Arr::set(
+                $rules,
+                $starProp,
+                $filtered
+            );
+
+            $ruleCache[$starProp] = $filtered;
         }
 
         $this->properties = collect($rules)
