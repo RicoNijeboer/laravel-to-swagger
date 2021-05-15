@@ -153,6 +153,12 @@ class PathData
 
     protected function calculateParameters(Batch $batch): self
     {
+        if ($batch->parameterEntry()->doesntExist()) {
+            $this->parameters = [];
+
+            return $this;
+        }
+
         $this->parameters = collect($batch->parameterEntry->content)
             ->map(function (array $data, string $parameter) {
                 ['class' => $class, 'required' => $required] = $data;

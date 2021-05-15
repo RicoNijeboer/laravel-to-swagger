@@ -204,4 +204,22 @@ class PathDataTest extends TestCase
             $parameters
         );
     }
+
+    /**
+     * @test
+     */
+    public function it_does_stores_an_empty_array_of_parameters_when_the_batch_does_not_have_an_entry_for_parameters()
+    {
+        $batch = Batch::factory(['route_uri' => 'batches/{batch}'])
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->validation([]))
+            ->create();
+
+        $data = new PathData($batch);
+
+        $parameters = $this->property($data, 'parameters')->getValue($data);
+
+        $this->assertIsArray($parameters);
+        $this->assertEmpty($parameters);
+    }
 }
