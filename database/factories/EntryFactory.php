@@ -48,4 +48,12 @@ class EntryFactory extends Factory
                 ],
         ]);
     }
+
+    public function parameters(array $parameters = null): self
+    {
+        return $this->state(fn () => [
+            'type'    => Entry::TYPE_ROUTE_PARAMETERS,
+            'content' => $parameters ?? [],
+        ]);
+    }
 }

@@ -37,7 +37,7 @@ class SwaggerReaderTest extends TestCase
         });
         $this->app->singleton('validator', fn () => $mockValidator);
         $request = new Request();
-        $request->setRouteResolver(fn () => Route::get('index', fn () => response()->noContent()));
+        $request->setRouteResolver(fn () => Route::get('index', fn () => response()->noContent())->bind($request));
 
         $middleware->handle($request, fn () => response()->noContent());
     }
@@ -144,10 +144,11 @@ class SwaggerReaderTest extends TestCase
         $middleware = resolve(SwaggerReader::class);
         $request = new Request();
         $request->setMethod($batch->route_method);
-        $request->setRouteResolver(function () use ($batch) {
+        $request->setRouteResolver(function () use ($request, $batch) {
             return Route::name($batch->route_name)
                 ->{strtolower($batch->route_method)}($batch->route_uri, fn () => response()->noContent())
-                ->middleware($batch->route_middleware);
+                ->middleware($batch->route_middleware)
+                ->bind($request);
         });
 
         $middleware->handle($request, fn () => response()->noContent());
@@ -173,7 +174,7 @@ class SwaggerReaderTest extends TestCase
 
             return $response;
         };
-        $request->setRouteResolver(fn () => Route::get('index', $action));
+        $request->setRouteResolver(fn () => Route::get('index', $action)->bind($request));
 
         /** @var SwaggerReader $middleware */
         $middleware = resolve(SwaggerReader::class);

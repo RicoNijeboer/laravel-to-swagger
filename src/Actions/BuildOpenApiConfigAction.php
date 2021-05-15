@@ -135,6 +135,10 @@ class BuildOpenApiConfigAction
             ];
         }
 
+        if (!empty($pathData->parameters)) {
+            $batchConfig['parameters'] = $pathData->parameters;
+        }
+
         if ($batch->tags()->exists()) {
             $batchConfig['tags'] = $batch->tags->pluck('tag')->toArray();
         }

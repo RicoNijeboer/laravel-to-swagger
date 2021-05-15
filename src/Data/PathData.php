@@ -22,6 +22,8 @@ class PathData
 
     public string $summary;
 
+    public array $parameters = [];
+
     public array $requiredProperties = [];
 
     public array $properties = [];
@@ -55,7 +57,8 @@ class PathData
         $this->method = strtolower($batch->route_method);
         $this->summary = $batch->route_name ?? $batch->route_uri;
 
-        $this->calculateProperties($batch)
+        $this->calculateParameters($batch)
+            ->calculateProperties($batch)
             ->calculateRequired($batch)
             ->calculateResponse($batch);
     }
@@ -146,5 +149,25 @@ class PathData
                 ];
                 break;
         }
+    }
+
+    protected function calculateParameters(Batch $batch): self
+    {
+        $this->parameters = collect($batch->parameterEntry->content)
+            ->map(function ($class, $parameter) {
+                return [
+                    'in'          => 'path',
+                    'required'    => true,
+                    'name'        => $parameter,
+                    'schema'      => [
+                        'type' => 'string',
+                    ],
+                    'description' => $class === 'string' ? Str::studly($parameter) : class_basename($class),
+                ];
+            })
+            ->values()
+            ->all();
+
+        return $this;
     }
 }

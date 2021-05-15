@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
 use RicoNijeboer\Swagger\Actions\ReadRouteInformationAction;
+use RicoNijeboer\Swagger\Models\Batch;
 use RicoNijeboer\Swagger\Models\Entry;
 use RicoNijeboer\Swagger\Tests\TestCase;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -28,7 +29,7 @@ class ReadRouteInformationActionTest extends TestCase
         $request = new Request();
         $request->server->set('REQUEST_METHOD', 'GET');
 
-        $action->read($request, Route::get('index', fn () => response()->noContent()), response()->noContent());
+        $action->read($request, Route::get('index', fn () => response()->noContent())->bind($request), response()->noContent());
 
         $this->assertDatabaseCount('swagger_batches', 1);
         $this->assertDatabaseHas('swagger_batches', [
@@ -49,7 +50,8 @@ class ReadRouteInformationActionTest extends TestCase
         $request = new Request();
         $request->server->set('REQUEST_METHOD', 'GET');
         $route = Route::get('index', fn () => response()->noContent())
-            ->name('some.route.name');
+            ->name('some.route.name')
+            ->bind($request);
 
         $action->read($request, $route, response()->noContent());
 
@@ -70,7 +72,7 @@ class ReadRouteInformationActionTest extends TestCase
         $action = resolve(ReadRouteInformationAction::class);
         $request = new Request();
         $request->server->set('REQUEST_METHOD', 'HEAD');
-        $route = Route::get('index', fn () => response()->noContent());
+        $route = Route::get('index', fn () => response()->noContent())->bind($request);
 
         $action->read($request, $route, response()->noContent());
 
@@ -99,7 +101,7 @@ class ReadRouteInformationActionTest extends TestCase
         $action = resolve(ReadRouteInformationAction::class);
         $request = new Request();
         $request->server->set('REQUEST_METHOD', 'HEAD');
-        $route = Route::get('index', $responseClosure);
+        $route = Route::get('index', $responseClosure)->bind($request);
 
         $action->read($request, $route, $response);
 
@@ -131,7 +133,7 @@ class ReadRouteInformationActionTest extends TestCase
         $action = resolve(ReadRouteInformationAction::class);
         $request = new Request();
         $request->server->set('REQUEST_METHOD', 'HEAD');
-        $route = Route::get('index', fn () => $response);
+        $route = Route::get('index', fn () => $response)->bind($request);
 
         $action->read($request, $route, $response);
 
@@ -158,7 +160,7 @@ class ReadRouteInformationActionTest extends TestCase
         $action = resolve(ReadRouteInformationAction::class);
         $request = new Request();
         $request->server->set('REQUEST_METHOD', 'HEAD');
-        $route = Route::get('index', fn () => response()->noContent());
+        $route = Route::get('index', fn () => response()->noContent())->bind($request);
         $rules = ['email' => ['email', 'required']];
 
         $action->read($request, $route, response()->noContent(), $rules);
@@ -166,6 +168,30 @@ class ReadRouteInformationActionTest extends TestCase
         $this->assertDatabaseHas('swagger_entries', [
             'type'    => Entry::TYPE_VALIDATION_RULES,
             'content' => json_encode($rules),
+        ]);
+    }
+
+    /**
+     * @test
+     */
+    public function it_stores_an_entry_for_the_route_parameters()
+    {
+        /** @var ReadRouteInformationAction $action */
+        $action = resolve(ReadRouteInformationAction::class);
+        $batch = Batch::factory()->create();
+        $request = new Request();
+        $request->server->set('REQUEST_URI', 'batches/' . $batch->id);
+        $request->server->set('REQUEST_METHOD', 'GET');
+        $route = Route::get('batches/{batch}', fn () => response()->noContent())->bind($request);
+        $route->setParameter('batch', $batch);
+
+        $action->read($request, $route, response()->noContent());
+
+        $this->assertDatabaseHas('swagger_entries', [
+            'type'    => Entry::TYPE_ROUTE_PARAMETERS,
+            'content' => json_encode([
+                'batch' => Batch::class,
+            ]),
         ]);
     }
 
