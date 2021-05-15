@@ -1,6 +1,6 @@
 <?php
 
-namespace RicoNijeboer\Swagger\Tests\Unit\Middleware;
+namespace RicoNijeboer\Swagger\Tests\Unit\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
