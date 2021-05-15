@@ -48,6 +48,17 @@ Swagger::routes(null, [
 ]);
 ```
 
+#### Using Swagger UI instead of Redoc
+
+You can disable Redoc and use Swagger UI instead by passing `false` as the second parameter to the `forDocumentation` method.
+
+```php
+use RicoNijeboer\Swagger\Http\Routing\RouteRegistrar;
+use RicoNijeboer\Swagger\Swagger;
+
+Swagger::routes(fn (RouteRegistrar $routes) => $routes->forDocumentation('/docs', false));
+```
+
 ### Registering routes for your Swagger config
 
 To add routes to your Swagger config you want to add the `\RicoNijeboer\Swagger\Http\Middleware\SwaggerReader` middleware. Which is aliased to both `swagger_reader` and `openapi_reader`.

@@ -3,6 +3,7 @@
 namespace RicoNijeboer\Swagger\Http\Controllers;
 
 use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\URL;
@@ -46,7 +47,21 @@ class OpenApiController extends Controller
             'redocVersion' => config('swagger.redoc.version'),
             'specUrl'      => URL::temporarySignedRoute(
                 Swagger::configRoute()->getName(),
-                now()->addMinute()
+                now()->addMinutes(15)
+            ),
+        ]);
+    }
+
+    /**
+     * @return Response
+     */
+    public function swagger(): Response
+    {
+        return response()->view('swagger::swagger', [
+            'title'   => config('swagger.info.title'),
+            'specUrl' => URL::temporarySignedRoute(
+                Swagger::configRoute()->getName(),
+                now()->addMinutes(15)
             ),
         ]);
     }
