@@ -8,7 +8,7 @@ class CreateSwaggerTagsTable extends Migration
 {
     public function up()
     {
-        Schema::create('swagger_tags', function (Blueprint $table) {
+        Schema::connection(config('swagger.database.connection'))->create('swagger_tags', function (Blueprint $table) {
             $table->id();
 
             $table->string('tag')->unique();
@@ -19,6 +19,6 @@ class CreateSwaggerTagsTable extends Migration
 
     public function down()
     {
-        Schema::dropIfExists('swagger_tags');
+        Schema::connection(config('swagger.database.connection'))->dropIfExists('swagger_tags');
     }
 }

@@ -2,6 +2,14 @@
 
 All notable changes will be documented here.
 
+## v2.1.2 - 2021-05-15
+
+**Bugfixes**
+
+- The configured connection was not being used within the added migrations.
+  - To ensure your tables are created in the right connection add a `connection` call to the `Schema::create` in the migration.    
+    `Schema::connection(config('swagger.database.connection'))`
+
 ## v2.1.1 - 2021-05-15
 
 **Bugfixes**
