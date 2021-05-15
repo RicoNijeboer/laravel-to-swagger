@@ -23,6 +23,7 @@ class Entry extends Model
     use HasFactory;
 
     const TYPE_VALIDATION_RULES = 'validation/rules';
+    const TYPE_ROUTE_PARAMETERS = 'route/parameters';
     const TYPE_RESPONSE = 'response';
 
     protected $casts = [
