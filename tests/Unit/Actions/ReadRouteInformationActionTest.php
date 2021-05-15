@@ -190,7 +190,35 @@ class ReadRouteInformationActionTest extends TestCase
         $this->assertDatabaseHas('swagger_entries', [
             'type'    => Entry::TYPE_ROUTE_PARAMETERS,
             'content' => json_encode([
-                'batch' => Batch::class,
+                'batch' => [
+                    'class'    => Batch::class,
+                    'required' => true,
+                ],
+            ]),
+        ]);
+    }
+
+    /**
+     * @test
+     */
+    public function it_stores_an_entry_for_the_nullable_route_parameters()
+    {
+        /** @var ReadRouteInformationAction $action */
+        $action = resolve(ReadRouteInformationAction::class);
+        $batch = Batch::factory()->create();
+        $request = new Request();
+        $route = Route::get('batches/{batch?}', fn () => response()->noContent())->bind($request);
+        $route->setParameter('batch', $batch);
+
+        $action->read($request, $route, response()->noContent());
+
+        $this->assertDatabaseHas('swagger_entries', [
+            'type'    => Entry::TYPE_ROUTE_PARAMETERS,
+            'content' => json_encode([
+                'batch' => [
+                    'class'    => Batch::class,
+                    'required' => false,
+                ],
             ]),
         ]);
     }

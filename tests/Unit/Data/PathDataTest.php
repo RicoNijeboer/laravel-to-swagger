@@ -147,7 +147,12 @@ class PathDataTest extends TestCase
         $batch = Batch::factory(['route_uri' => 'batches/{batch}'])
             ->has(Entry::factory()->response())
             ->has(Entry::factory()->validation([]))
-            ->has(Entry::factory()->parameters(['batch' => Batch::class]))
+            ->has(Entry::factory()->parameters([
+                'batch' => [
+                    'class'    => Batch::class,
+                    'required' => true,
+                ],
+            ]))
             ->create();
 
         $data = new PathData($batch);
@@ -161,7 +166,40 @@ class PathDataTest extends TestCase
                 '0.name'        => 'batch',
                 '0.schema.type' => 'string',
                 '0.required'    => true,
-                '0.description' => class_basename(Batch::class),
+                '0.description' => 'Batch',
+            ],
+            $parameters
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_shows_when_a_parameter_is_optional()
+    {
+        $batch = Batch::factory(['route_uri' => 'batches/{batch}'])
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->validation([]))
+            ->has(Entry::factory()->parameters([
+                'batch' => [
+                    'class'    => Batch::class,
+                    'required' => false,
+                ],
+            ]))
+            ->create();
+
+        $data = new PathData($batch);
+
+        $parameters = $this->property($data, 'parameters')->getValue($data);
+
+        $this->assertIsArray($parameters);
+        $this->assertArrayHasKeys(
+            [
+                '0.in'          => 'path',
+                '0.name'        => 'batch',
+                '0.schema.type' => 'string',
+                '0.required'    => false,
+                '0.description' => 'Batch',
             ],
             $parameters
         );

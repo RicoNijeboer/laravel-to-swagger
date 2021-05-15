@@ -63,7 +63,7 @@ class BuildOpenApiConfigActionTest extends TestCase
             ))
             ->has(Entry::factory()->validation())
             ->has(Entry::factory()->response())
-            ->has(Entry::factory()->parameters(['batch' => Batch::class]))
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
             ->create()
             ->load([
                 'validationRulesEntry',
@@ -107,7 +107,7 @@ class BuildOpenApiConfigActionTest extends TestCase
             ))
             ->has(Entry::factory()->validation())
             ->has(Entry::factory()->response())
-            ->has(Entry::factory()->parameters(['batch' => Batch::class]))
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
             ->create()
             ->load([
                 'validationRulesEntry',
@@ -151,7 +151,7 @@ class BuildOpenApiConfigActionTest extends TestCase
                 'items.*'       => ['required'],
             ]))
             ->has(Entry::factory()->response())
-            ->has(Entry::factory()->parameters(['batch' => Batch::class]))
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
             ->create()
             ->load([
                 'validationRulesEntry',
@@ -194,7 +194,7 @@ class BuildOpenApiConfigActionTest extends TestCase
         Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 200])
             ->has(Entry::factory()->validation())
             ->has(Entry::factory()->response($response))
-            ->has(Entry::factory()->parameters(['batch' => Batch::class]))
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
             ->create();
 
         $result = $action->build();
@@ -219,7 +219,7 @@ class BuildOpenApiConfigActionTest extends TestCase
         Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
             ->has(Entry::factory()->validation())
             ->has(Entry::factory()->response($response))
-            ->has(Entry::factory()->parameters(['batch' => Batch::class]))
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
             ->create();
 
         $result = $action->build();
@@ -250,7 +250,7 @@ class BuildOpenApiConfigActionTest extends TestCase
         Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 200])
             ->has(Entry::factory()->validation())
             ->has(Entry::factory()->response($response))
-            ->has(Entry::factory()->parameters(['batch' => Batch::class]))
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
             ->create();
 
         $result = $action->build();
@@ -278,7 +278,7 @@ class BuildOpenApiConfigActionTest extends TestCase
         $batch = Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
             ->has(Entry::factory()->validation())
             ->has(Entry::factory()->response())
-            ->has(Entry::factory()->parameters(['batch' => Batch::class]))
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
             ->has(Tag::factory()->count(3))
             ->create();
 
@@ -303,7 +303,7 @@ class BuildOpenApiConfigActionTest extends TestCase
         Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
             ->has(Entry::factory()->validation())
             ->has(Entry::factory()->response())
-            ->has(Entry::factory()->parameters(['batch' => Batch::class]))
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
             ->create();
 
         /** @var BuildOpenApiConfigAction $action */

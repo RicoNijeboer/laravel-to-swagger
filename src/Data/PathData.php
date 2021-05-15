@@ -154,10 +154,12 @@ class PathData
     protected function calculateParameters(Batch $batch): self
     {
         $this->parameters = collect($batch->parameterEntry->content)
-            ->map(function ($class, $parameter) {
+            ->map(function (array $data, string $parameter) {
+                ['class' => $class, 'required' => $required] = $data;
+
                 return [
                     'in'          => 'path',
-                    'required'    => true,
+                    'required'    => $required,
                     'name'        => $parameter,
                     'schema'      => [
                         'type' => 'string',

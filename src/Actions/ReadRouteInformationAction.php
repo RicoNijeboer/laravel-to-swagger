@@ -88,8 +88,13 @@ class ReadRouteInformationAction
         $entry->content = collect($route->parameters())->mapWithKeys(function ($value, string $parameter) use ($route) {
             $parameterValue = $route->parameter($parameter);
 
+            preg_match("/\{({$parameter})(:[\w]*)?\}/", $route->uri(), $matches);
+
             return [
-                $parameter => !is_object($parameterValue) ? 'string' : get_class($parameterValue),
+                $parameter => [
+                    'class'    => !is_object($parameterValue) ? 'string' : get_class($parameterValue),
+                    'required' => count($matches) > 0,
+                ],
             ];
         });
 
