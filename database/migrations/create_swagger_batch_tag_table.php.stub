@@ -11,8 +11,16 @@ class CreateSwaggerBatchTagTable extends Migration
         Schema::create('swagger_batch_tag', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('batch_id')->constrained('swagger_batches', 'id');
-            $table->foreignId('tag_id')->constrained('swagger_tags', 'id');
+            $table->foreignId('batch_id');
+            $table->foreign('batch_id')
+                  ->references('id')
+                  ->on('swagger_batches')
+                  ->onDeleteCascade();
+            $table->foreignId('tag_id');
+            $table->foreign('tag_id')
+                  ->references('id')
+                  ->on('swagger_tags')
+                  ->onDeleteCascade();
 
             $table->timestamps();
         });
