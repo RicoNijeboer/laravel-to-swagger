@@ -38,6 +38,7 @@ class PathDataTest extends TestCase
                     'order.address.postalCode' => ['required'],
                 ],
             ]))
+            ->has(Entry::factory()->parameters())
             ->create();
 
         $data = new PathData($batch);
@@ -77,6 +78,7 @@ class PathDataTest extends TestCase
     {
         $batch = Batch::factory()
             ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters())
             ->has(Entry::factory([
                 'type'    => Entry::TYPE_VALIDATION_RULES,
                 'content' => [
@@ -110,6 +112,7 @@ class PathDataTest extends TestCase
                 'roles'    => ['developer'],
                 'foo'      => ['bar' => 'baz'],
             ])->prepare(new Request())))
+            ->has(Entry::factory()->parameters())
             ->create();
 
         $data = new PathData($batch);
@@ -133,6 +136,72 @@ class PathDataTest extends TestCase
                 'schema.properties.foo.properties.bar.type' => 'string',
             ],
             $response
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_calculate_all_parameters()
+    {
+        $batch = Batch::factory(['route_uri' => 'batches/{batch}'])
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->validation([]))
+            ->has(Entry::factory()->parameters([
+                'batch' => [
+                    'class'    => Batch::class,
+                    'required' => true,
+                ],
+            ]))
+            ->create();
+
+        $data = new PathData($batch);
+
+        $parameters = $this->property($data, 'parameters')->getValue($data);
+
+        $this->assertIsArray($parameters);
+        $this->assertArrayHasKeys(
+            [
+                '0.in'          => 'path',
+                '0.name'        => 'batch',
+                '0.schema.type' => 'string',
+                '0.required'    => true,
+                '0.description' => 'Batch',
+            ],
+            $parameters
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_shows_when_a_parameter_is_optional()
+    {
+        $batch = Batch::factory(['route_uri' => 'batches/{batch}'])
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->validation([]))
+            ->has(Entry::factory()->parameters([
+                'batch' => [
+                    'class'    => Batch::class,
+                    'required' => false,
+                ],
+            ]))
+            ->create();
+
+        $data = new PathData($batch);
+
+        $parameters = $this->property($data, 'parameters')->getValue($data);
+
+        $this->assertIsArray($parameters);
+        $this->assertArrayHasKeys(
+            [
+                '0.in'          => 'path',
+                '0.name'        => 'batch',
+                '0.schema.type' => 'string',
+                '0.required'    => false,
+                '0.description' => 'Batch',
+            ],
+            $parameters
         );
     }
 }

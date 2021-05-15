@@ -25,7 +25,8 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
  * @property Collection|Entry[] $entries
  * @property Entry              $validationRulesEntry
  * @property Entry              $responseEntry
- * @property Collection|Tag[] $tags
+ * @property Entry              $parameterEntry
+ * @property Collection|Tag[]   $tags
  * @method static BatchFactory factory(...$parameters)
  * @method static Builder forRequestAndResponse(Request $request, SymfonyResponse $response)
  */
@@ -52,6 +53,15 @@ class Batch extends Model
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class, 'swagger_batch_tag');
+    }
+
+    /**
+     * @return HasOne
+     */
+    public function parameterEntry(): HasOne
+    {
+        return $this->hasOne(Entry::class)
+            ->where('type', '=', Entry::TYPE_ROUTE_PARAMETERS);
     }
 
     /**

@@ -65,6 +65,10 @@ class ObfuscateJsonAction
             return $this->faker->word();
         }
 
+        if (is_null($value)) {
+            return null;
+        }
+
         ray($value);
         ray()->pause();
 

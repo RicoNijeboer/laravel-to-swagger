@@ -2,9 +2,7 @@
 
 namespace RicoNijeboer\Swagger\Actions;
 
-use Exception;
 use Illuminate\Routing\Route;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use RicoNijeboer\Swagger\Models\Batch;
 use RicoNijeboer\Swagger\Models\Entry;
@@ -32,6 +30,7 @@ class ReadRouteInformationAction
     {
         $batch = $this->createBatch(strtoupper($request->getMethod()), $route, $response);
 
+        $parametersEntry = $this->createParametersEntry($batch, $route);
         $rulesEntry = $this->createRulesEntry($batch, $rules);
         $responseEntry = $this->createResponseEntry($batch, $response);
     }
@@ -80,6 +79,30 @@ class ReadRouteInformationAction
         return $entry;
     }
 
+    protected function createParametersEntry(Batch $batch, Route $route): Entry
+    {
+        $entry = new Entry();
+        $entry->batch()->associate($batch);
+
+        $entry->type = Entry::TYPE_ROUTE_PARAMETERS;
+        $entry->content = collect($route->parameters())->mapWithKeys(function ($value, string $parameter) use ($route) {
+            $parameterValue = $route->parameter($parameter);
+
+            preg_match("/\{({$parameter})(:[\w]*)?\}/", $route->uri(), $matches);
+
+            return [
+                $parameter => [
+                    'class'    => !is_object($parameterValue) ? 'string' : get_class($parameterValue),
+                    'required' => count($matches) > 0,
+                ],
+            ];
+        });
+
+        $entry->save();
+
+        return $entry;
+    }
+
     /**
      * @param SymfonyResponse $response
      *
@@ -95,59 +118,5 @@ class ReadRouteInformationAction
         }
 
         return $responseContent;
-    }
-
-    /**
-     * @param mixed $item
-     *
-     * @return mixed
-     * @throws Exception
-     */
-    protected function obfuscate($item, bool $ensureDifferentValue = true, int $maxTries = 10)
-    {
-        if ($ensureDifferentValue) {
-            $tries = 0;
-            $value = $item;
-
-            do {
-                $tries++;
-                $value = $this->obfuscate($value, false);
-            } while ($item === $value || $tries < $maxTries);
-
-            if ($tries === $maxTries && $item === $value) {
-                throw new Exception("Maximum tries of [{$maxTries}] reached.");
-            }
-
-            return $value;
-        }
-
-        if (is_numeric($item)) {
-            if (is_int($item)) {
-                return rand();
-            }
-
-            // Check if $item has exactly 2 decimals
-            if (floor($item * 100) === $item * 100) {
-                return (float)(rand() . ".01");
-            }
-
-            return (float)(rand() . ".0123456789");
-        }
-
-        if (is_string($item)) {
-            $time = strtotime($item);
-
-            if ($time !== false) {
-                $diff = rand(60000, 120000);
-                $diff = $time > time() ? $diff : (-1 * $diff);
-                $format = $this->getDateFormat($time);
-
-                return date($format, time() + $diff);
-            }
-
-            return uniqid('string-');
-        }
-
-        return $item;
     }
 }

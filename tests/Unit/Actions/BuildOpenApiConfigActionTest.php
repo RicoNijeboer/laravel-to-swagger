@@ -63,6 +63,7 @@ class BuildOpenApiConfigActionTest extends TestCase
             ))
             ->has(Entry::factory()->validation())
             ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
             ->create()
             ->load([
                 'validationRulesEntry',
@@ -106,6 +107,7 @@ class BuildOpenApiConfigActionTest extends TestCase
             ))
             ->has(Entry::factory()->validation())
             ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
             ->create()
             ->load([
                 'validationRulesEntry',
@@ -149,6 +151,7 @@ class BuildOpenApiConfigActionTest extends TestCase
                 'items.*'       => ['required'],
             ]))
             ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
             ->create()
             ->load([
                 'validationRulesEntry',
@@ -191,6 +194,7 @@ class BuildOpenApiConfigActionTest extends TestCase
         Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 200])
             ->has(Entry::factory()->validation())
             ->has(Entry::factory()->response($response))
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
             ->create();
 
         $result = $action->build();
@@ -215,6 +219,7 @@ class BuildOpenApiConfigActionTest extends TestCase
         Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
             ->has(Entry::factory()->validation())
             ->has(Entry::factory()->response($response))
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
             ->create();
 
         $result = $action->build();
@@ -245,6 +250,7 @@ class BuildOpenApiConfigActionTest extends TestCase
         Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 200])
             ->has(Entry::factory()->validation())
             ->has(Entry::factory()->response($response))
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
             ->create();
 
         $result = $action->build();
@@ -272,6 +278,7 @@ class BuildOpenApiConfigActionTest extends TestCase
         $batch = Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
             ->has(Entry::factory()->validation())
             ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
             ->has(Tag::factory()->count(3))
             ->create();
 
@@ -286,5 +293,33 @@ class BuildOpenApiConfigActionTest extends TestCase
         $this->assertCount(3, $path['tags']);
 
         $batch->tags->each(fn (Tag $tag) => $this->asserttrue(in_array($tag->tag, $path['tags'])));
+    }
+
+    /**
+     * @test
+     */
+    public function it_adds_the_parameters_to_the_paths()
+    {
+        Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
+            ->has(Entry::factory()->validation())
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
+            ->create();
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+
+        $result = $action->build();
+
+        $this->assertArrayHasKeys(
+            [
+                'paths./products.get.parameters.0.in'          => 'path',
+                'paths./products.get.parameters.0.name'        => 'batch',
+                'paths./products.get.parameters.0.schema.type' => 'string',
+                'paths./products.get.parameters.0.required'    => true,
+                'paths./products.get.parameters.0.description' => 'Batch',
+            ],
+            $result
+        );
     }
 }
