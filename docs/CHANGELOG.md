@@ -2,6 +2,12 @@
 
 All notable changes will be documented here.
 
+## Upcoming
+
+- When a route has a custom domain using `->domain(...)` it is now displayed in the Swagger config.
+  - When updating to this version add an alter migration for the `swagger_batches` table which adds a nullable `route_domain` column   
+    `$table->string('route_domain')->nullable();`
+
 ## v2.1.1 - 2021-05-15
 
 **Bugfixes**
