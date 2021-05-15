@@ -208,7 +208,7 @@ class PathDataTest extends TestCase
     /**
      * @test
      */
-    public function it_does_stores_an_empty_array_of_parameters_when_the_batch_does_not_have_an_entry_for_parameters()
+    public function it_stores_an_empty_array_of_parameters_when_the_batch_does_not_have_an_entry_for_parameters()
     {
         $batch = Batch::factory(['route_uri' => 'batches/{batch}'])
             ->has(Entry::factory()->response())
@@ -221,5 +221,26 @@ class PathDataTest extends TestCase
 
         $this->assertIsArray($parameters);
         $this->assertEmpty($parameters);
+    }
+
+    /**
+     * @test
+     */
+    public function it_stores_a_server_when_the_route_domain_column_is_set()
+    {
+        /** @var Batch $batch */
+        $batch = Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204, 'route_domain' => 'echo.example.com'])
+            ->has(Entry::factory()->validation())
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters())
+            ->create();
+
+        $data = new PathData($batch);
+
+        $servers = $this->property($data, 'servers')->getValue($data);
+
+        $this->assertIsArray($servers);
+        $this->assertCount(1, $servers);
+        $this->assertArrayHasKeys(['0.url' => 'echo.example.com'], $servers);
     }
 }

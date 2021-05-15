@@ -15,6 +15,7 @@ class CreateSwaggerBatchesTable extends Migration
             $table->string('route_method');
             $table->string('route_uri');
             $table->string('route_name')->nullable();
+            $table->string('route_domain')->nullable();
             $table->text('route_middleware');
 
             $table->timestamps();
