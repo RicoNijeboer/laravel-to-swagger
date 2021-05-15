@@ -8,6 +8,14 @@ All notable changes will be documented here.
   - When updating to this version add an alter migration for the `swagger_batches` table which adds a nullable `route_domain` column   
     `$table->string('route_domain')->nullable();`
 
+## v2.1.2 - 2021-05-15
+
+**Bugfixes**
+
+- The configured connection was not being used within the added migrations.
+  - To ensure your tables are created in the right connection add a `connection` call to the `Schema::create` in the migration.    
+    `Schema::connection(config('swagger.database.connection'))`
+
 ## v2.1.1 - 2021-05-15
 
 **Bugfixes**

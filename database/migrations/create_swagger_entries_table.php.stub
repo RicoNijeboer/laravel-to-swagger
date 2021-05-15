@@ -8,7 +8,7 @@ class CreateSwaggerEntriesTable extends Migration
 {
     public function up()
     {
-        Schema::create('swagger_entries', function (Blueprint $table) {
+        Schema::connection(config('swagger.database.connection'))->create('swagger_entries', function (Blueprint $table) {
             $table->id();
 
             $table->foreignId('batch_id');
@@ -26,6 +26,6 @@ class CreateSwaggerEntriesTable extends Migration
 
     public function down()
     {
-        Schema::dropIfExists('swagger_entries');
+        Schema::connection(config('swagger.database.connection'))->dropIfExists('swagger_entries');
     }
 }

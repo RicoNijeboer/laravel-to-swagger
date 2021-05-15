@@ -10,7 +10,7 @@ return [
 
     /*
      * The delay in seconds before a route should be re-evaluated.
-     * Defaults to half a day.
+     * Defaults to half a day (or 12 hours).
      */
     'evaluation-delay' => 43200,
 
