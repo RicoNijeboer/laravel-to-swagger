@@ -16,6 +16,12 @@ This package aims to bring the easiest path to creating a Swagger / OpenApi 3 co
 - **PHP**: 7.4.x or 8.0.x
 - **Laravel**: v6 / v7 / v8
 
+### Updating
+
+When changes are made that impact existing users, I will make sure that they are documented in the [Changelog](#changelog).
+
+These will contain changes like database columns added / removed / renamed. Or functional changes that need action within your code.
+
 ## Usage
 
 ### Registering the Redoc Documentation route.
