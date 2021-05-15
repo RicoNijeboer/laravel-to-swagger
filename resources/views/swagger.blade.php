@@ -23,7 +23,7 @@
     <script>
         window.onload = function() {
             window.ui = SwaggerUIBundle({
-                url: "{{ $specUrl }}",
+                url: "{!! $specUrl !!}",
                 dom_id: '#swagger-ui',
                 deepLinking: true,
                 presets: [
