@@ -21,7 +21,7 @@ class RouteRegistrar
         $this->router = $router;
     }
 
-    public function forDocumentation(string $uri = 'docs')
+    public function forDocumentation(string $uri = 'docs', bool $redoc = true)
     {
         $openApiConfigRoute = $this->router->name('documentation.config')
             ->middleware(ValidateSignature::class)
@@ -29,7 +29,12 @@ class RouteRegistrar
 
         Swagger::configRoute($openApiConfigRoute);
 
-        $this->router->name('documentation.redoc')
-            ->get($uri, [OpenApiController::class, 'docs']);
+        if ($redoc) {
+            $this->router->name('documentation.redoc')
+                ->get($uri, [OpenApiController::class, 'redoc']);
+        } else {
+            $this->router->name('documentation.swagger')
+                ->get($uri, [OpenApiController::class, 'swagger']);
+        }
     }
 }

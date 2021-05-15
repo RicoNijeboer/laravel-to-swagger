@@ -38,22 +38,6 @@ class OpenApiController extends Controller
     }
 
     /**
-     * @param Request $request
-     *
-     * @return Response
-     */
-    public function docs(Request $request): Response
-    {
-        switch ($request->get('type', 'redoc')) {
-            case 'swagger':
-                return $this->swagger();
-            case 'redoc':
-            default:
-                return $this->redoc();
-        }
-    }
-
-    /**
      * @return Response
      */
     public function redoc(): Response
@@ -63,7 +47,7 @@ class OpenApiController extends Controller
             'redocVersion' => config('swagger.redoc.version'),
             'specUrl'      => URL::temporarySignedRoute(
                 Swagger::configRoute()->getName(),
-                now()->addMinute()
+                now()->addMinutes(15)
             ),
         ]);
     }
@@ -75,8 +59,9 @@ class OpenApiController extends Controller
     {
         return response()->view('swagger::swagger', [
             'title'   => config('swagger.info.title'),
-            'specUrl' => URL::signedRoute(
-                Swagger::configRoute()->getName()
+            'specUrl' => URL::temporarySignedRoute(
+                Swagger::configRoute()->getName(),
+                now()->addMinutes(15)
             ),
         ]);
     }
