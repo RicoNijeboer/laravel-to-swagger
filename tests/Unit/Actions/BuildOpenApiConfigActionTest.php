@@ -322,4 +322,28 @@ class BuildOpenApiConfigActionTest extends TestCase
             $result
         );
     }
+
+    /**
+     * @test
+     */
+    public function it_displays_a_separate_server_on_the_path_when_the_batch_has_a_route_domain()
+    {
+        Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204, 'route_domain' => 'echo.example.com'])
+            ->has(Entry::factory()->validation())
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters())
+            ->create();
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+
+        $result = $action->build();
+
+        $this->assertArrayHasKeys(
+            [
+                'paths./products.get.servers.0.url' => 'echo.example.com',
+            ],
+            $result
+        );
+    }
 }

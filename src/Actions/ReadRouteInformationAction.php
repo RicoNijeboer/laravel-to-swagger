@@ -43,6 +43,7 @@ class ReadRouteInformationAction
         $batch->route_method = strtoupper($method);
         $batch->route_uri = $route->uri();
         $batch->route_name = $route->getName();
+        $batch->route_domain = $route->getDomain();
         $batch->route_middleware = $route->gatherMiddleware();
 
         $batch->save();

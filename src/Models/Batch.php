@@ -20,7 +20,8 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
  * @property int                $response_code
  * @property string             $route_method
  * @property string             $route_uri
- * @property string             $route_name
+ * @property string|null        $route_name
+ * @property string|null        $route_domain
  * @property array              $route_middleware
  * @property Collection|Entry[] $entries
  * @property Entry              $validationRulesEntry

@@ -139,6 +139,10 @@ class BuildOpenApiConfigAction
             $batchConfig['parameters'] = $pathData->parameters;
         }
 
+        if (!empty($pathData->servers)) {
+            $batchConfig['servers'] = $pathData->servers;
+        }
+
         if ($batch->tags()->exists()) {
             $batchConfig['tags'] = $batch->tags->pluck('tag')->toArray();
         }
