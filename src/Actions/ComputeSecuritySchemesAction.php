@@ -5,6 +5,7 @@ namespace RicoNijeboer\Swagger\Actions;
 use Generator;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Laravel\Passport\Client;
 use Laravel\Passport\Passport;
 use Laravel\Passport\Scope;
@@ -74,10 +75,8 @@ class ComputeSecuritySchemesAction
         $hasTokenUrl = $this->router->has(self::PASSPORT_TOKEN_ROUTE_NAME);
         $hasAuthorizationUrl = $this->router->has(self::PASSPORT_AUTHORIZATIONS_AUTHORIZE_ROUTE_NAME);
 
-        $tokenUrl = $hasTokenUrl ? URL::route(self::PASSPORT_TOKEN_ROUTE_NAME)
-            : URL::to(self::PASSPORT_TOKEN_ROUTE_SLUG);
-        $authorizationUrl = $hasAuthorizationUrl ? URL::route(self::PASSPORT_AUTHORIZATIONS_AUTHORIZE_ROUTE_NAME)
-            : URL::to(self::PASSPORT_AUTHORIZATIONS_AUTHORIZE_ROUTE_SLUG);
+        $tokenUrl = $this->getPassportOAuthTokenUrl();
+        $authorizationUrl = $this->getPassportOAuthAuthorizationUrl();
 
         $clients = Passport::client()->newQuery()->get();
         $scopes = Passport::scopes()->mapWithKeys(fn (Scope $scope) => [$scope->id => $scope->description])->all();
@@ -118,5 +117,41 @@ class ComputeSecuritySchemesAction
                 unset($schemes[$guardName]['flows'][$flow]);
             }
         }
+    }
+
+    /**
+     * @return string
+     */
+    protected function getPassportOAuthTokenUrl(): string
+    {
+        $route = $this->router->getRoutes()->getByName(self::PASSPORT_TOKEN_ROUTE_NAME);
+
+        if (is_null($route)) {
+            return self::PASSPORT_TOKEN_ROUTE_SLUG;
+        }
+
+        if (is_null($route->getDomain())) {
+            return Str::start($route->uri(), '/');
+        }
+
+        return URL::route(self::PASSPORT_TOKEN_ROUTE_NAME);
+    }
+
+    /**
+     * @return string
+     */
+    protected function getPassportOAuthAuthorizationUrl(): string
+    {
+        $route = $this->router->getRoutes()->getByName(self::PASSPORT_AUTHORIZATIONS_AUTHORIZE_ROUTE_NAME);
+
+        if (is_null($route)) {
+            return self::PASSPORT_AUTHORIZATIONS_AUTHORIZE_ROUTE_SLUG;
+        }
+
+        if (is_null($route->getDomain())) {
+            return Str::start($route->uri(), '/');
+        }
+
+        return URL::route(self::PASSPORT_AUTHORIZATIONS_AUTHORIZE_ROUTE_NAME);
     }
 }
