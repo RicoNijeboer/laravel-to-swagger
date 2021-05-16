@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use RicoNijeboer\Swagger\Actions\BuildOpenApiConfigAction;
+use RicoNijeboer\Swagger\Exceptions\MalformedServersException;
 use RicoNijeboer\Swagger\Models\Batch;
 use RicoNijeboer\Swagger\Models\Entry;
 use RicoNijeboer\Swagger\Models\Tag;
@@ -345,5 +346,115 @@ class BuildOpenApiConfigActionTest extends TestCase
             ],
             $result
         );
+    }
+
+    /**
+     * @test
+     */
+    public function it_does_not_return_an_array_of_variables_on_servers_when_the_server_does_not_contain_variables()
+    {
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+        config()->set('swagger.servers', [
+            [
+                'url' => 'https://api.example.com',
+            ],
+        ]);
+
+        $result = $action->build();
+
+        $this->assertArrayDoesntHaveKeys(
+            ['servers.0.parameters'],
+            $result
+        );
+    }
+
+    /**
+     * @test
+     * @throws MalformedServersException
+     */
+    public function it_contains_an_array_of_variables_on_servers_when_the_server_has_variables()
+    {
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+        config()->set('swagger.servers', [
+            [
+                'url'       => 'https://{customerId}.saas-app.com:{port}/v2',
+                'variables' => [
+                    'customerId' => [
+                        'default'     => 'demo',
+                        'description' => 'Customer ID assigned by the service provider',
+                    ],
+                    'port'       => [
+                        'enum'    => [
+                            '443',
+                            '8443',
+                        ],
+                        'default' => '443',
+                    ],
+                ],
+            ],
+        ]);
+
+        $result = $action->build();
+
+        $this->assertArrayHasKeys(
+            [
+                'servers.0.url'                              => 'https://{customerId}.saas-app.com:{port}/v2',
+                'servers.0.variables.customerId.default'     => 'demo',
+                'servers.0.variables.customerId.description' => 'Customer ID assigned by the service provider',
+                'servers.0.variables.port.enum.0'            => '443',
+                'servers.0.variables.port.enum.1'            => '8443',
+                'servers.0.variables.port.default'           => '443',
+            ],
+            $result
+        );
+    }
+
+    /**
+     * @test
+     * @dataProvider malformedServers
+     */
+    public function it_throws_an_exception_when_the_server_config_is_malformed($server)
+    {
+        $this->expectException(MalformedServersException::class);
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+        config()->set('swagger.servers', [$server]);
+
+        $action->build();
+    }
+
+    /**
+     * @return array
+     */
+    public function malformedServers(): array
+    {
+        return [
+            'no url'                           => [
+                [
+                    'description' => 'This server has no url.',
+                ],
+            ],
+            'variables as string array'        => [
+                [
+                    'url'       => 'https://{customerId}.saas-app.com:{port}/v2',
+                    'variables' => [
+                        'customerId',
+                        'port',
+                    ],
+                ],
+            ],
+            'variables with strings as values' => [
+                [
+                    'url'       => 'https://{customerId}.saas-app.com:{port}/v2',
+                    'variables' => [
+                        'customerId' => 'demo',
+                        'port'       => '443',
+                    ],
+                ],
+            ],
+        ];
     }
 }

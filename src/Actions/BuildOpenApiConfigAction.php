@@ -2,11 +2,17 @@
 
 namespace RicoNijeboer\Swagger\Actions;
 
+use Illuminate\Container\Container;
+use Illuminate\Contracts\Translation\Translator;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\LazyCollection;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Validator;
 use RicoNijeboer\Swagger\Data\PathData;
+use RicoNijeboer\Swagger\Exceptions\MalformedServersException;
 use RicoNijeboer\Swagger\Models\Batch;
+use RicoNijeboer\Swagger\Support\Concerns\HelperMethods;
 
 /**
  * Class BuildOpenApiConfig
@@ -15,6 +21,8 @@ use RicoNijeboer\Swagger\Models\Batch;
  */
 class BuildOpenApiConfigAction
 {
+    use HelperMethods;
+
     private ComputeSecuritySchemesAction $securitySchemes;
 
     public function __construct(ComputeSecuritySchemesAction $securitySchemes)
@@ -22,6 +30,10 @@ class BuildOpenApiConfigAction
         $this->securitySchemes = $securitySchemes;
     }
 
+    /**
+     * @return array
+     * @throws MalformedServersException
+     */
     public function build(): array
     {
         $openApi = [
@@ -54,21 +66,36 @@ class BuildOpenApiConfigAction
 
     /**
      * @return array
+     * @throws MalformedServersException
      */
     protected function getServers(): array
     {
-        /** @var array $servers */
-        $servers = config('swagger.servers', []);
+        $validator = new Validator(resolve(Translator::class), ['servers' => config('swagger.servers', [])], [
+            'servers'               => [
+                'array',
+                'min:0',
+            ],
+            'servers.*.url'         => ['required'],
+            'servers.*.description' => ['nullable', 'string'],
+            'servers.*.variables'   => ['nullable', 'array', 'min:0'],
+            'servers.*.variables.*' => ['array'],
+        ]);
+        $validator->setContainer(Container::getInstance());
 
-        return array_filter(
-            array_map(
-                fn (array $server) => array_filter([
-                    'url'         => $server['url'],
-                    'description' => $server['description'] ?? null,
-                ]),
-                $servers
-            )
-        );
+        try {
+            $validator->validate();
+
+            $servers = [];
+            foreach ($this->recursively(config('swagger.servers', [])) as [$item, $key]) {
+                if (!is_null($item)) {
+                    Arr::set($servers, $key, $item);
+                }
+            }
+
+            return $servers;
+        } catch (ValidationException $e) {
+            throw new MalformedServersException($e->validator->errors());
+        }
     }
 
     /**
