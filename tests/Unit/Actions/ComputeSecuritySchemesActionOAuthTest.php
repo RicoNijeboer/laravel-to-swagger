@@ -149,7 +149,6 @@ class ComputeSecuritySchemesActionOAuthTest extends TestCase
             ],
         ]);
         Passport::routes();
-        Passport::enableImplicitGrant();
         /** @var ClientRepository $clientRepository */
         $clientRepository = resolve(ClientRepository::class);
         $clientRepository->create(
@@ -200,6 +199,81 @@ class ComputeSecuritySchemesActionOAuthTest extends TestCase
                 'Guard: api.flows.password.scopes.Scope2' => 'Electric boogaloo',
             ],
             $oauthSchemes
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_returns_the_urls_relatively()
+    {
+        /** @var ComputeSecuritySchemesAction $action */
+        $action = resolve(ComputeSecuritySchemesAction::class);
+        config()->set('auth.guards', [
+            'api' => [
+                'driver'   => 'passport',
+                'provider' => 'users',
+            ],
+        ]);
+        Passport::routes();
+        Passport::enableImplicitGrant();
+        /** @var ClientRepository $clientRepository */
+        $clientRepository = resolve(ClientRepository::class);
+        $clientRepository->create(
+            null, 'Auth code client', URL::to('/auth/callback')
+        );
+        $clientRepository->create(null, 'Client Credentials Client', '');
+        $clientRepository->createPasswordGrantClient(null, 'Password client', 'http://localhost', 'users');
+
+        $schemes = $action->oAuth2Schemes();
+
+        $this->assertArrayHasKeys(
+            [
+                'Guard: api.flows.password.tokenUrl'                  => '/oauth/token',
+                'Guard: api.flows.clientCredentials.tokenUrl'         => '/oauth/token',
+                'Guard: api.flows.authorizationCode.tokenUrl'         => '/oauth/token',
+                'Guard: api.flows.authorizationCode.authorizationUrl' => '/oauth/authorize',
+                'Guard: api.flows.implicit.tokenUrl'                  => '/oauth/token',
+                'Guard: api.flows.implicit.authorizationUrl'          => '/oauth/authorize',
+            ],
+            $schemes
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_returns_full_urls_when_the_routes_have_a_domain()
+    {
+        /** @var ComputeSecuritySchemesAction $action */
+        $action = resolve(ComputeSecuritySchemesAction::class);
+        config()->set('auth.guards', [
+            'api' => [
+                'driver'   => 'passport',
+                'provider' => 'users',
+            ],
+        ]);
+        URL::forceScheme('https');
+        Passport::routes(null, ['domain' => 'oauth.example.com']);
+        Passport::enableImplicitGrant();
+        /** @var ClientRepository $clientRepository */
+        $clientRepository = resolve(ClientRepository::class);
+        $clientRepository->create(null, 'Auth code client', URL::to('/auth/callback'));
+        $clientRepository->create(null, 'Client Credentials Client', '');
+        $clientRepository->createPasswordGrantClient(null, 'Password client', 'http://localhost', 'users');
+
+        $schemes = $action->oAuth2Schemes();
+
+        $this->assertArrayHasKeys(
+            [
+                'Guard: api.flows.password.tokenUrl'                  => 'https://oauth.example.com/oauth/token',
+                'Guard: api.flows.clientCredentials.tokenUrl'         => 'https://oauth.example.com/oauth/token',
+                'Guard: api.flows.authorizationCode.tokenUrl'         => 'https://oauth.example.com/oauth/token',
+                'Guard: api.flows.authorizationCode.authorizationUrl' => 'https://oauth.example.com/oauth/authorize',
+                'Guard: api.flows.implicit.tokenUrl'                  => 'https://oauth.example.com/oauth/token',
+                'Guard: api.flows.implicit.authorizationUrl'          => 'https://oauth.example.com/oauth/authorize',
+            ],
+            $schemes
         );
     }
 }

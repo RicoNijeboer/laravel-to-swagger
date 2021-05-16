@@ -4,9 +4,16 @@ All notable changes will be documented here.
 
 ## Upcoming
 
+### Changes
+- OAuth URLs are now relative when you don't supply a custom domain to them.
 - When a route has a custom domain using `->domain(...)` it is now displayed in the Swagger config.
-  - When updating to this version add an alter migration for the `swagger_batches` table which adds a nullable `route_domain` column   
-    `$table->string('route_domain')->nullable();`
+    
+### Upgrading
+
+- When updating to this version add an alter migration for the `swagger_batches` table which adds a nullable `route_domain` column   
+  `$table->string('route_domain')->nullable();`
+
+---
 
 ## v2.1.2 - 2021-05-15
 
@@ -16,11 +23,15 @@ All notable changes will be documented here.
   - To ensure your tables are created in the right connection add a `connection` call to the `Schema::create` in the migration.    
     `Schema::connection(config('swagger.database.connection'))`
 
+---
+
 ## v2.1.1 - 2021-05-15
 
 **Bugfixes**
 
 - Fixed a bug where existing batches without a parameter entry would make your config get corrupted.
+
+---
 
 ## v2.1.0 - 2021-05-15
 
@@ -32,9 +43,13 @@ All notable changes will be documented here.
 
 - Fixed a bug with foreign key constraints not cascade deleting
 
+---
+
 ## v2.0.0 - 2021-05-14
 
 - Responses are now calculated and sent to the config as well.
+
+---
 
 ## Changes since version 1
 
