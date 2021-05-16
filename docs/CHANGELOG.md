@@ -5,6 +5,7 @@ All notable changes will be documented here.
 ## Upcoming
 
 ### Changes
+- Added support for [server templating](https://github.com/RicoNijeboer/laravel-to-swagger/issues/4).
 - OAuth URLs are now relative when you don't supply a custom domain to them.
 - When a route has a custom domain using `->domain(...)` it is now displayed in the Swagger config.
     
