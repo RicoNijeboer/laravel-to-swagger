@@ -5,6 +5,7 @@ namespace RicoNijeboer\Swagger\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use RicoNijeboer\Swagger\Http\Middleware\Concerns\AttachesTagsToBatches;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class SwaggerTag
@@ -24,10 +25,16 @@ class SwaggerTag
      */
     public function handle(Request $request, Closure $next, ...$tags)
     {
-        $response = $next($request);
+        return $next($request);
+    }
 
+    /**
+     * @param Request         $request
+     * @param Response        $response
+     * @param string|string[] ...$tags
+     */
+    public function terminate(Request $request, Response $response, ...$tags)
+    {
         $this->attachTags($request, $response, $tags, true);
-
-        return $response;
     }
 }

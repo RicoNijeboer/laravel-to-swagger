@@ -3,7 +3,6 @@
 namespace RicoNijeboer\Swagger\Support\Concerns;
 
 use Generator;
-use Illuminate\Support\Arr;
 use ReflectionException;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -19,7 +18,7 @@ trait HelperMethods
     protected function recursively(array $array, string $keyPrefix = ''): Generator
     {
         foreach ($array as $key => $item) {
-            $keyWithPrefix = implode('.', array_filter([$keyPrefix, $key], fn(string $k) => strlen($k) > 0));
+            $keyWithPrefix = implode('.', array_filter([$keyPrefix, $key], fn (string $k) => strlen($k) > 0));
 
             if (is_array($item)) {
                 foreach ($this->recursively($item, $keyWithPrefix) as [$subItem, $subItemKey]) {
@@ -76,7 +75,7 @@ trait HelperMethods
             '/\.\d{3}\b/' => '.v',
         ];
         $date = preg_replace(array_keys($patterns), array_values($patterns), $date);
-ray($date);
+
         return preg_match('/\d/', $date) ? false : $date;
     }
 
@@ -110,5 +109,31 @@ ray($date);
         $property->setAccessible(true);
 
         return $property;
+    }
+
+    /**
+     * Get an ordinal number from the integer.
+     *   1 => '1st'
+     *   2 => '2nd'
+     *   etc.
+     *
+     * @param int $number
+     *
+     * @return string
+     */
+    protected function ordinal(int $number): string
+    {
+        if (!in_array($number % 100, [11, 12, 13])) {
+            switch ($number % 10) {
+                case 1:
+                    return $number . 'st';
+                case 2:
+                    return $number . 'nd';
+                case 3:
+                    return $number . 'rd';
+            }
+        }
+
+        return $number . 'th';
     }
 }

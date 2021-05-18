@@ -24,6 +24,7 @@ class Entry extends Model
 
     const TYPE_VALIDATION_RULES = 'validation/rules';
     const TYPE_ROUTE_PARAMETERS = 'route/parameters';
+    const TYPE_ROUTE_WHERES = 'route/wheres';
     const TYPE_RESPONSE = 'response';
 
     protected $casts = [

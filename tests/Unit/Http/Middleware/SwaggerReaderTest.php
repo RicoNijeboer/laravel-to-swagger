@@ -1,6 +1,6 @@
 <?php
 
-namespace RicoNijeboer\Swagger\Tests\Unit\Middleware;
+namespace RicoNijeboer\Swagger\Tests\Unit\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -25,7 +25,7 @@ class SwaggerReaderTest extends TestCase
     /**
      * @test
      */
-    public function it_registers_an_on_validate_handler_when_enabled()
+    public function it_registers_an_on_validate_handler()
     {
         /** @var SwaggerReader $middleware */
         $middleware = resolve(SwaggerReader::class);
@@ -73,7 +73,11 @@ class SwaggerReaderTest extends TestCase
         );
         $middleware = new SwaggerReader($readAction);
 
+        // Simulate executing middleware while a user is waiting
         $middleware->handle($request, $action);
+
+        // Simulate what happens after a response has been sent
+        $middleware->terminate($request, $response);
     }
 
     /**
@@ -105,7 +109,11 @@ class SwaggerReaderTest extends TestCase
         );
         $middleware = new SwaggerReader($readAction);
 
+        // Simulate executing middleware while a user is waiting
         $middleware->handle($request, $action);
+
+        // Simulate what happens after a response has been sent
+        $middleware->terminate($request, $response);
     }
 
     /**
@@ -151,7 +159,7 @@ class SwaggerReaderTest extends TestCase
                 ->bind($request);
         });
 
-        $middleware->handle($request, fn () => response()->noContent());
+        $middleware->terminate($request, response()->noContent());
 
         $this->assertDatabaseMissing('swagger_batches', [
             'id' => $batch->id,
@@ -179,7 +187,7 @@ class SwaggerReaderTest extends TestCase
         /** @var SwaggerReader $middleware */
         $middleware = resolve(SwaggerReader::class);
 
-        $middleware->handle($request, $action, 'tag-one', 'tag-two');
+        $middleware->terminate($request, $response, 'tag-one', 'tag-two');
 
         $this->assertDatabaseHas('swagger_tags', ['tag' => 'tag-one']);
         $this->assertDatabaseHas('swagger_tags', ['tag' => 'tag-two']);

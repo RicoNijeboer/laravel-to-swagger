@@ -22,6 +22,8 @@ class PathData
 
     public string $summary;
 
+    public array $servers = [];
+
     public array $parameters = [];
 
     public array $requiredProperties = [];
@@ -57,7 +59,8 @@ class PathData
         $this->method = strtolower($batch->route_method);
         $this->summary = $batch->route_name ?? $batch->route_uri;
 
-        $this->calculateParameters($batch)
+        $this->calculateServers($batch)
+            ->calculateParameters($batch)
             ->calculateProperties($batch)
             ->calculateRequired($batch)
             ->calculateResponse($batch);
@@ -151,6 +154,11 @@ class PathData
         }
     }
 
+    /**
+     * @param Batch $batch
+     *
+     * @return $this
+     */
     protected function calculateParameters(Batch $batch): self
     {
         if ($batch->parameterEntry()->doesntExist()) {
@@ -159,22 +167,46 @@ class PathData
             return $this;
         }
 
+        $formats = optional(optional($batch->parameterWheresEntry)->content)->getArrayCopy() ?? [];
+
         $this->parameters = collect($batch->parameterEntry->content)
-            ->map(function (array $data, string $parameter) {
+            ->map(function (array $data, string $parameter) use ($formats) {
                 ['class' => $class, 'required' => $required] = $data;
+
+                $hasFormat = array_key_exists($parameter, $formats);
 
                 return [
                     'in'          => 'path',
                     'required'    => $required,
                     'name'        => $parameter,
-                    'schema'      => [
+                    'schema'      => array_merge([
                         'type' => 'string',
-                    ],
+                    ], array_filter([
+                        'format' => $hasFormat ? $formats[$parameter] : null,
+                    ])),
                     'description' => $class === 'string' ? Str::studly($parameter) : class_basename($class),
                 ];
             })
             ->values()
             ->all();
+
+        return $this;
+    }
+
+    /**
+     * @param Batch $batch
+     *
+     * @return $this
+     */
+    protected function calculateServers(Batch $batch): PathData
+    {
+        $this->servers = [];
+
+        if (!empty($batch->route_domain)) {
+            $this->servers[] = [
+                'url' => $batch->route_domain,
+            ];
+        }
 
         return $this;
     }

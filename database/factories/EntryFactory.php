@@ -56,4 +56,12 @@ class EntryFactory extends Factory
             'content' => $parameters ?? [],
         ]);
     }
+
+    public function wheres(array $wheres = null): self
+    {
+        return $this->state(fn () => [
+            'type'    => Entry::TYPE_ROUTE_WHERES,
+            'content' => $wheres ?? [],
+        ]);
+    }
 }

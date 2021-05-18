@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use RicoNijeboer\Swagger\Actions\BuildOpenApiConfigAction;
+use RicoNijeboer\Swagger\Exceptions\MalformedServersException;
 use RicoNijeboer\Swagger\Models\Batch;
 use RicoNijeboer\Swagger\Models\Entry;
 use RicoNijeboer\Swagger\Models\Tag;
@@ -185,6 +186,41 @@ class BuildOpenApiConfigActionTest extends TestCase
     /**
      * @test
      */
+    public function it_contains_a_format_when_a_validated_field_has_a_regex_rule()
+    {
+        Batch::factory()
+            ->state(new Sequence(
+                ['route_uri' => 'products', 'route_method' => 'POST', 'route_name' => 'products.create', 'response_code' => 200],
+            ))
+            ->has(Entry::factory()->validation([
+                'field' => ['required', 'string', 'regex:/[0-9]_[a-z]/'],
+            ]))
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
+            ->create()
+            ->load([
+                'validationRulesEntry',
+                'responseEntry',
+            ]);
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+
+        $result = $action->build();
+
+        $this->assertArrayHasKeys(
+            [
+                'requestBody.content.application/json.schema.type'                    => 'object',
+                'requestBody.content.application/json.schema.properties.field.type'   => 'string',
+                'requestBody.content.application/json.schema.properties.field.format' => '[0-9]_[a-z]',
+            ],
+            Arr::get($result, 'paths./products.post')
+        );
+    }
+
+    /**
+     * @test
+     */
     public function it_describes_html_responses()
     {
         /** @var BuildOpenApiConfigAction $action */
@@ -321,5 +357,184 @@ class BuildOpenApiConfigActionTest extends TestCase
             ],
             $result
         );
+    }
+
+    /**
+     * @test
+     */
+    public function it_does_not_fail_when_the_batch_does_not_have_a_parameter_wheres_entry()
+    {
+        Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
+            ->has(Entry::factory()->validation())
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
+            ->create();
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+
+        $result = $action->build();
+
+        $this->assertIsArray($result);
+    }
+
+    /**
+     * @test
+     */
+    public function it_adds_a_format_rule_to_parameters_that_have_parameter_wheres()
+    {
+        Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
+            ->has(Entry::factory()->validation())
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
+            ->has(Entry::factory()->wheres(['batch' => '[0-9]+']))
+            ->create();
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+
+        $result = $action->build();
+
+        $this->assertArrayHasKeys(
+            [
+                'paths./products.get.parameters.0.description'   => 'Batch',
+                'paths./products.get.parameters.0.schema.format' => '[0-9]+',
+            ],
+            $result
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_displays_a_separate_server_on_the_path_when_the_batch_has_a_route_domain()
+    {
+        Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204, 'route_domain' => 'echo.example.com'])
+            ->has(Entry::factory()->validation())
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters())
+            ->create();
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+
+        $result = $action->build();
+
+        $this->assertArrayHasKeys(
+            [
+                'paths./products.get.servers.0.url' => 'echo.example.com',
+            ],
+            $result
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_does_not_return_an_array_of_variables_on_servers_when_the_server_does_not_contain_variables()
+    {
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+        config()->set('swagger.servers', [
+            [
+                'url' => 'https://api.example.com',
+            ],
+        ]);
+
+        $result = $action->build();
+
+        $this->assertArrayDoesntHaveKeys(
+            ['servers.0.parameters'],
+            $result
+        );
+    }
+
+    /**
+     * @test
+     * @throws MalformedServersException
+     */
+    public function it_contains_an_array_of_variables_on_servers_when_the_server_has_variables()
+    {
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+        config()->set('swagger.servers', [
+            [
+                'url'       => 'https://{customerId}.saas-app.com:{port}/v2',
+                'variables' => [
+                    'customerId' => [
+                        'default'     => 'demo',
+                        'description' => 'Customer ID assigned by the service provider',
+                    ],
+                    'port'       => [
+                        'enum'    => [
+                            '443',
+                            '8443',
+                        ],
+                        'default' => '443',
+                    ],
+                ],
+            ],
+        ]);
+
+        $result = $action->build();
+
+        $this->assertArrayHasKeys(
+            [
+                'servers.0.url'                              => 'https://{customerId}.saas-app.com:{port}/v2',
+                'servers.0.variables.customerId.default'     => 'demo',
+                'servers.0.variables.customerId.description' => 'Customer ID assigned by the service provider',
+                'servers.0.variables.port.enum.0'            => '443',
+                'servers.0.variables.port.enum.1'            => '8443',
+                'servers.0.variables.port.default'           => '443',
+            ],
+            $result
+        );
+    }
+
+    /**
+     * @test
+     * @dataProvider malformedServers
+     */
+    public function it_throws_an_exception_when_the_server_config_is_malformed($server)
+    {
+        $this->expectException(MalformedServersException::class);
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+        config()->set('swagger.servers', [$server]);
+
+        $action->build();
+    }
+
+    /**
+     * @return array
+     */
+    public function malformedServers(): array
+    {
+        return [
+            'no url'                           => [
+                [
+                    'description' => 'This server has no url.',
+                ],
+            ],
+            'variables as string array'        => [
+                [
+                    'url'       => 'https://{customerId}.saas-app.com:{port}/v2',
+                    'variables' => [
+                        'customerId',
+                        'port',
+                    ],
+                ],
+            ],
+            'variables with strings as values' => [
+                [
+                    'url'       => 'https://{customerId}.saas-app.com:{port}/v2',
+                    'variables' => [
+                        'customerId' => 'demo',
+                        'port'       => '443',
+                    ],
+                ],
+            ],
+        ];
     }
 }

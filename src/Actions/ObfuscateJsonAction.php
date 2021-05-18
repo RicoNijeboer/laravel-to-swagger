@@ -69,9 +69,6 @@ class ObfuscateJsonAction
             return null;
         }
 
-        ray($value);
-        ray()->pause();
-
         return $value;
     }
 

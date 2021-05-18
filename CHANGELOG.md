@@ -2,25 +2,49 @@
 
 All notable changes will be documented here.
 
+## v2.2.0 - 2021-05-15
+
+### Changes
+
+- When a field in your request validation has a [`regex`](https://laravel.com/docs/8.x/validation#rule-regex) rule. It gets a `format` rule within the Swagger config.
+- When a route-parameter has a [`where`](https://laravel.com/docs/8.x/routing#parameters-regular-expression-constraints) (or `format` in Swagger terms) it now adds this in the Swagger config.
+- Added support for [server templating](https://github.com/RicoNijeboer/laravel-to-swagger/issues/4).
+- OAuth URLs are now relative when you don't supply a custom domain to them.
+- When a route has a custom domain using `->domain(...)` it is now displayed in the Swagger config.
+- The `SwaggerReader` and `SwaggerTag` are now [Terminable Middlewares](https://laravel.com/docs/8.x/middleware#terminable-middleware), which means your users should feel even less of an impact when using your app
+
+### Upgrading
+
+- When updating to this version add an alter migration for the `swagger_batches` table which adds a nullable `route_domain` string-column   
+  `$table->string('route_domain')->nullable();`
+
+---
+
 ## v2.1.3 - 2021-05-17
 
 **Bugfixes**
 
 - `cascadeOnDelete` instead of `onDeleteCascade` because the second one does not exist...
 
+---
+
 ## v2.1.2 - 2021-05-15
 
 **Bugfixes**
 
 - The configured connection was not being used within the added migrations.
-  - To ensure your tables are created in the right connection add a `connection` call to the `Schema::create` in the migration.    
-    `Schema::connection(config('swagger.database.connection'))`
+    - To ensure your tables are created in the right connection add a `connection` call to the `Schema::create` in the migration.    
+      `Schema::connection(config('swagger.database.connection'))`
+
+---
 
 ## v2.1.1 - 2021-05-15
 
 **Bugfixes**
 
 - Fixed a bug where existing batches without a parameter entry would make your config get corrupted.
+
+---
 
 ## v2.1.0 - 2021-05-15
 
@@ -32,9 +56,13 @@ All notable changes will be documented here.
 
 - Fixed a bug with foreign key constraints not cascade deleting
 
+---
+
 ## v2.0.0 - 2021-05-14
 
 - Responses are now calculated and sent to the config as well.
+
+---
 
 ## Changes since version 1
 

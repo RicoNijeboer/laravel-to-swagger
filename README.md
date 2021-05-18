@@ -22,6 +22,11 @@ When changes are made that impact existing users, I will make sure that they are
 
 These will contain changes like database columns added / removed / renamed. Or functional changes that need action within your code.
 
+#### v2.1.x to v2.2.x
+
+- When updating from v2.1 to v2.2 add a nullable `route_domain` string-column to the `swagger_batches` domain.   
+  `$table->string('route_domain')->nullable();`
+
 ## Usage
 
 ### Registering the Redoc Documentation route.
@@ -121,12 +126,11 @@ return [
 ];
 ```
 
-### Swagger Meta Information and Servers
+### Swagger Meta Information
 
-Swagger allows you to provide the users with a bit of info about your API; a title, a description and a version, and also an unlimited amount of servers to display in your UI.
+Swagger allows you to provide the users with a bit of info about your API; a title, a description and a version.
 
-In the config there is a `swagger.info` array where you can add your API's title, description and version, as shown below.  
-There is also a `swagger.servers` array where you can add all the servers you'd like.
+In the config there is a `swagger.info` array where you can add your API's title, description and version, as shown below.
 
 ```php
 return [
@@ -136,6 +140,18 @@ return [
         'description' => null,
         'version'     => '2.1.2',
     ],
+    //...
+];
+```
+
+### Swagger Servers
+
+Swagger allows you to show the user servers that you can access the API from. A basic setup would be the one below;
+
+- You have one API where your users can access live data and one where they can access some demo information.
+
+```php
+return [
     //...
     'servers'          => [
         [
@@ -151,13 +167,65 @@ return [
 ];
 ```
 
-> _Currently the package does not support [Server templating](https://swagger.io/docs/specification/api-host-and-base-path), although I do plan on adding it [in the future](https://github.com/RicoNijeboer/laravel-to-swagger/issues/6)_
+#### Server templating
+
+Swagger also supports [Server templating](https://swagger.io/docs/specification/api-host-and-base-path/). You are able to add variables to your server which gives you the possibility to obfuscate the
+urls a bit.
+
+An example from their documentation is a server where you have `https://{customerId}.saas-app.com:{port}/v2` as the URL. This is translated to their Yaml as shown below. They define the url,
+containing its variables, and describe what the variables do and what their default values are.
+
+Laravel to Swagger supports basically the same format as the Yaml file, below the Yaml you can see how you translate it to the Swagger config. I've added very light validation to this, so if the
+Swagger UI / Redoc UI breaks try to first ensure that you've correctly configured the config according to the [Swagger docs](https://swagger.io/docs/specification/api-host-and-base-path/)
+
+**Swagger Yaml**
+
+```yaml
+servers:
+  - url: https://{customerId}.saas-app.com:{port}/v2
+    variables:
+      customerId:
+        default: demo
+        description: Customer ID assigned by the service provider
+      port:
+        enum:
+          - '443'
+          - '8443'
+        default: '443'
+```
+
+**Laravel to Swagger Config**
+
+```php
+return [
+    //...
+    'servers'          => [
+        [
+            'url'       => 'https://{customerId}.saas-app.com:{port}/v2',
+            'variables' => [
+                'customerId' => [
+                    'default'     => 'demo',
+                    'description' => 'Customer ID assigned by the service provider',
+                ],
+                'port'       => [
+                    'enum'    => [
+                        '443',
+                        '8443',
+                    ],
+                    'default' => '443',
+                ],
+            ],
+        ],
+    ],
+    //...
+];
+```
 
 ### Redoc Version
 
-Let's say you run into a bug within the Redoc that the team behind Redoc has fixed in a newer version, and I have not updated the package yet to have the fixed version used.
-I have added a config value (`swagger.redoc.version`), so you don't have to mess around with things like published views or anything;
-You can simply change the version based on their [releases](https://github.com/Redocly/redoc/releases), at the time of writing this documentation the latest version is `v2.0.0-rc.53`.
+Let's say you run into a bug within the Redoc that the team behind Redoc has fixed in a newer version, and I have not updated the package yet to have the fixed version used. I have added a config
+value (`swagger.redoc.version`), so you don't have to mess around with things like published views or anything; You can simply change the version based on
+their [releases](https://github.com/Redocly/redoc/releases), at the time of writing this documentation the latest version is `v2.0.0-rc.53`.
 
 ```php
 return [
@@ -186,4 +254,4 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 
 ## Changelog
 
-All notable changes can be found in the [CHANGELOG.md](docs/CHANGELOG.md).
+All notable changes can be found in the [CHANGELOG.md](CHANGELOG.md).

@@ -19,6 +19,8 @@ class SwaggerReader
 {
     use AttachesTagsToBatches;
 
+    protected array $rules = [];
+
     protected ReadRouteInformationAction $readRouteInformationAction;
 
     /**
@@ -38,28 +40,29 @@ class SwaggerReader
      *
      * @return mixed
      */
-    public function handle(Request $request, Closure $next, ...$tags)
+    public function handle(Request $request, Closure $next)
     {
-        $rules = [];
+        $this->rules = [];
 
-        Validator::onValidate(function (array $addedRules, array $data = []) use (&$rules) {
+        Validator::onValidate(function (array $addedRules, array $data = []) {
             $parsed = (new ValidationRuleParser($data))->explode($addedRules);
 
-            $rules = array_merge_recursive($rules, $parsed->rules);
+            $this->rules = array_merge_recursive($this->rules, $parsed->rules);
         });
 
-        $response = $next($request);
+        return $next($request);
+    }
 
+    public function terminate(Request $request, Response $response, ...$tags)
+    {
         $shouldEvaluate = $this->shouldEvaluate($request, $response);
 
         if ($shouldEvaluate) {
             $this->deleteExistingBatch($request, $response);
-            $this->read($request, $response, $rules);
+            $this->read($request, $response, $this->rules);
         }
 
         $this->attachTags($request, $response, $tags);
-
-        return $response;
     }
 
     /**

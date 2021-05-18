@@ -1,6 +1,6 @@
 <?php
 
-namespace RicoNijeboer\Swagger\Tests\Unit\Middleware;
+namespace RicoNijeboer\Swagger\Tests\Unit\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -37,7 +37,11 @@ class SwaggerTagTest extends TestCase
             ->{strtolower($batch->route_method)}($batch->route_uri, fn () => $response)
             ->middleware($batch->route_middleware));
 
+        // Simulate executing middleware while a user is waiting
         $middleware->handle($request, fn () => $response, 'add');
+
+        // Simulate what happens after a response has been sent
+        $middleware->terminate($request, $response, 'add');
 
         $this->assertDatabaseHas('swagger_tags', [
             'tag' => 'add',
