@@ -75,7 +75,6 @@ trait HelperMethods
             '/\.\d{3}\b/' => '.v',
         ];
         $date = preg_replace(array_keys($patterns), array_values($patterns), $date);
-        ray($date);
 
         return preg_match('/\d/', $date) ? false : $date;
     }
