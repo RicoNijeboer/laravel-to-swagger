@@ -15,7 +15,7 @@ class CreateSwaggerEntriesTable extends Migration
             $table->foreign('batch_id')
                   ->references('id')
                   ->on('swagger_batches')
-                  ->onDeleteCascade();
+                  ->cascadeOnDelete();
 
             $table->string('type')->index();
             $table->json('content')->nullable();

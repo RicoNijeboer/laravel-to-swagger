@@ -15,12 +15,12 @@ class CreateSwaggerBatchTagTable extends Migration
             $table->foreign('batch_id')
                   ->references('id')
                   ->on('swagger_batches')
-                  ->onDeleteCascade();
+                  ->cascadeOnDelete();
             $table->foreignId('tag_id');
             $table->foreign('tag_id')
                   ->references('id')
                   ->on('swagger_tags')
-                  ->onDeleteCascade();
+                  ->cascadeOnDelete();
 
             $table->timestamps();
         });

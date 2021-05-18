@@ -20,6 +20,14 @@ All notable changes will be documented here.
 
 ---
 
+## v2.1.3 - 2021-05-17
+
+**Bugfixes**
+
+- `cascadeOnDelete` instead of `onDeleteCascade` because the second one does not exist...
+
+---
+
 ## v2.1.2 - 2021-05-15
 
 **Bugfixes**
