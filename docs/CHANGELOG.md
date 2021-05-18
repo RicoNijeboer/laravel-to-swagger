@@ -11,6 +11,7 @@ All notable changes will be documented here.
 - Added support for [server templating](https://github.com/RicoNijeboer/laravel-to-swagger/issues/4).
 - OAuth URLs are now relative when you don't supply a custom domain to them.
 - When a route has a custom domain using `->domain(...)` it is now displayed in the Swagger config.
+- The `SwaggerReader` and `SwaggerTag` are now [Terminable Middlewares](https://laravel.com/docs/8.x/middleware#terminable-middleware), which means your users should feel even less of an impact when using your app
 
 ### Upgrading
 
