@@ -2,7 +2,7 @@
 
 All notable changes will be documented here.
 
-## Upcoming
+## v2.2.0 - 2021-05-15
 
 ### Changes
 
@@ -15,7 +15,7 @@ All notable changes will be documented here.
 
 ### Upgrading
 
-- When updating to this version add an alter migration for the `swagger_batches` table which adds a nullable `route_domain` column   
+- When updating to this version add an alter migration for the `swagger_batches` table which adds a nullable `route_domain` string-column   
   `$table->string('route_domain')->nullable();`
 
 ---

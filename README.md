@@ -22,6 +22,11 @@ When changes are made that impact existing users, I will make sure that they are
 
 These will contain changes like database columns added / removed / renamed. Or functional changes that need action within your code.
 
+#### v2.1.x to v2.2.x
+
+- When updating from v2.1 to v2.2 add a nullable `route_domain` string-column to the `swagger_batches` domain.   
+  `$table->string('route_domain')->nullable();`
+
 ## Usage
 
 ### Registering the Redoc Documentation route.
@@ -249,4 +254,4 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 
 ## Changelog
 
-All notable changes can be found in the [CHANGELOG.md](docs/CHANGELOG.md).
+All notable changes can be found in the [CHANGELOG.md](CHANGELOG.md).
