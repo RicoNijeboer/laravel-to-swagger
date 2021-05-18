@@ -186,6 +186,41 @@ class BuildOpenApiConfigActionTest extends TestCase
     /**
      * @test
      */
+    public function it_contains_a_format_when_a_validated_field_has_a_regex_rule()
+    {
+        Batch::factory()
+            ->state(new Sequence(
+                ['route_uri' => 'products', 'route_method' => 'POST', 'route_name' => 'products.create', 'response_code' => 200],
+            ))
+            ->has(Entry::factory()->validation([
+                'field' => ['required', 'string', 'regex:/[0-9]_[a-z]/'],
+            ]))
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
+            ->create()
+            ->load([
+                'validationRulesEntry',
+                'responseEntry',
+            ]);
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+
+        $result = $action->build();
+
+        $this->assertArrayHasKeys(
+            [
+                'requestBody.content.application/json.schema.type'                    => 'object',
+                'requestBody.content.application/json.schema.properties.field.type'   => 'string',
+                'requestBody.content.application/json.schema.properties.field.format' => '[0-9]_[a-z]',
+            ],
+            Arr::get($result, 'paths./products.post')
+        );
+    }
+
+    /**
+     * @test
+     */
     public function it_describes_html_responses()
     {
         /** @var BuildOpenApiConfigAction $action */

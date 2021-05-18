@@ -35,19 +35,30 @@ class RuleHelper
         self::DATA_TYPE_PASSWORD           => 'string',
     ];
 
-    public static function hasRule(string $rule, array $rules): bool
+    public static function hasRule(string $pattern, array $rules): bool
     {
-        if (!Str::contains($rule, '*')) {
-            return in_array($rule, $rules);
+        if (!Str::contains($pattern, '*')) {
+            return in_array($pattern, $rules);
         }
 
-        foreach ($rules as $existingRule) {
-            if (is_string($rule) && Str::is($rule, $existingRule)) {
+        foreach ($rules as $rule) {
+            if (is_string($pattern) && Str::is($pattern, $rule)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    public static function getRule(string $pattern, array $rules): ?string
+    {
+        foreach ($rules as $rule) {
+            if (is_string($pattern) && Str::is($pattern, $rule)) {
+                return $rule;
+            }
+        }
+
+        return null;
     }
 
     public static function isNullable(array $rules): bool
@@ -179,6 +190,12 @@ class RuleHelper
                         return 'email';
                     }
 
+                    $regex = static::getRegex($rules);
+
+                    if (!empty($regex)) {
+                        return $regex;
+                    }
+
                     return null;
                 })($rules),
             ]);
@@ -222,5 +239,22 @@ class RuleHelper
                 ->map(fn (array $r, string $key) => static::openApiProperty($key, $r, $ruleCache))
                 ->toArray(),
         ];
+    }
+
+    public static function getRegex(array $rules): ?string
+    {
+        $regexRule = self::getRule('regex:*', $rules);
+
+        if (empty($regexRule)) {
+            return null;
+        }
+
+        $expression = explode(':', $regexRule, 2)[1];
+        $regexChar = substr($expression, 0, 1);
+        $expression = substr($expression, 1);
+
+        $lastPosition = strpos($expression, $regexChar, -1);
+
+        return str_split($expression, $lastPosition)[0];
     }
 }

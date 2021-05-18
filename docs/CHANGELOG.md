@@ -6,7 +6,8 @@ All notable changes will be documented here.
 
 ### Changes
 
-- When a route-parameter has a `where` (or `format` in Swagger terms) it now adds this in the Swagger config.
+- When a field in your request validation has a [`regex`](https://laravel.com/docs/8.x/validation#rule-regex) rule. It gets a `format` rule within the Swagger config.
+- When a route-parameter has a [`where`](https://laravel.com/docs/8.x/routing#parameters-regular-expression-constraints) (or `format` in Swagger terms) it now adds this in the Swagger config.
 - Added support for [server templating](https://github.com/RicoNijeboer/laravel-to-swagger/issues/4).
 - OAuth URLs are now relative when you don't supply a custom domain to them.
 - When a route has a custom domain using `->domain(...)` it is now displayed in the Swagger config.
