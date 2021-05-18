@@ -26,7 +26,8 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
  * @property Collection|Entry[] $entries
  * @property Entry              $validationRulesEntry
  * @property Entry              $responseEntry
- * @property Entry              $parameterEntry
+ * @property Entry|null         $parameterEntry
+ * @property Entry|null         $parameterWheresEntry
  * @property Collection|Tag[]   $tags
  * @method static BatchFactory factory(...$parameters)
  * @method static Builder forRequestAndResponse(Request $request, SymfonyResponse $response)
@@ -63,6 +64,15 @@ class Batch extends Model
     {
         return $this->hasOne(Entry::class)
             ->where('type', '=', Entry::TYPE_ROUTE_PARAMETERS);
+    }
+
+    /**
+     * @return HasOne
+     */
+    public function parameterWheresEntry(): HasOne
+    {
+        return $this->hasOne(Entry::class)
+            ->where('type', '=', Entry::TYPE_ROUTE_WHERES);
     }
 
     /**

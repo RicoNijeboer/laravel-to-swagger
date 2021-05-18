@@ -327,6 +327,51 @@ class BuildOpenApiConfigActionTest extends TestCase
     /**
      * @test
      */
+    public function it_does_not_fail_when_the_batch_does_not_have_a_parameter_wheres_entry()
+    {
+        Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
+            ->has(Entry::factory()->validation())
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
+            ->create();
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+
+        $result = $action->build();
+
+        $this->assertIsArray($result);
+    }
+
+    /**
+     * @test
+     */
+    public function it_adds_a_format_rule_to_parameters_that_have_parameter_wheres()
+    {
+        Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
+            ->has(Entry::factory()->validation())
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
+            ->has(Entry::factory()->wheres(['batch' => '[0-9]+']))
+            ->create();
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+
+        $result = $action->build();
+
+        $this->assertArrayHasKeys(
+            [
+                'paths./products.get.parameters.0.description'   => 'Batch',
+                'paths./products.get.parameters.0.schema.format' => '[0-9]+',
+            ],
+            $result
+        );
+    }
+
+    /**
+     * @test
+     */
     public function it_displays_a_separate_server_on_the_path_when_the_batch_has_a_route_domain()
     {
         Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204, 'route_domain' => 'echo.example.com'])

@@ -5,10 +5,12 @@ All notable changes will be documented here.
 ## Upcoming
 
 ### Changes
+
+- When a route-parameter has a `where` (or `format` in Swagger terms) it now adds this in the Swagger config.
 - Added support for [server templating](https://github.com/RicoNijeboer/laravel-to-swagger/issues/4).
 - OAuth URLs are now relative when you don't supply a custom domain to them.
 - When a route has a custom domain using `->domain(...)` it is now displayed in the Swagger config.
-    
+
 ### Upgrading
 
 - When updating to this version add an alter migration for the `swagger_batches` table which adds a nullable `route_domain` column   
@@ -21,8 +23,8 @@ All notable changes will be documented here.
 **Bugfixes**
 
 - The configured connection was not being used within the added migrations.
-  - To ensure your tables are created in the right connection add a `connection` call to the `Schema::create` in the migration.    
-    `Schema::connection(config('swagger.database.connection'))`
+    - To ensure your tables are created in the right connection add a `connection` call to the `Schema::create` in the migration.    
+      `Schema::connection(config('swagger.database.connection'))`
 
 ---
 

@@ -167,17 +167,23 @@ class PathData
             return $this;
         }
 
+        $formats = optional(optional($batch->parameterWheresEntry)->content)->getArrayCopy() ?? [];
+
         $this->parameters = collect($batch->parameterEntry->content)
-            ->map(function (array $data, string $parameter) {
+            ->map(function (array $data, string $parameter) use ($formats) {
                 ['class' => $class, 'required' => $required] = $data;
+
+                $hasFormat = array_key_exists($parameter, $formats);
 
                 return [
                     'in'          => 'path',
                     'required'    => $required,
                     'name'        => $parameter,
-                    'schema'      => [
+                    'schema'      => array_merge([
                         'type' => 'string',
-                    ],
+                    ], array_filter([
+                        'format' => $hasFormat ? $formats[$parameter] : null,
+                    ])),
                     'description' => $class === 'string' ? Str::studly($parameter) : class_basename($class),
                 ];
             })

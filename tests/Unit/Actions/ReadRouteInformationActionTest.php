@@ -242,6 +242,29 @@ class ReadRouteInformationActionTest extends TestCase
      }
 
     /**
+     * @test
+     */
+    public function it_stores_the_where_statements_when_a_route_has_them()
+    {
+        /** @var ReadRouteInformationAction $action */
+        $action = resolve(ReadRouteInformationAction::class);
+        $batch = Batch::factory()->create();
+        $request = new Request();
+        $route = Route::get('batches/{batch}', fn () => response()->noContent())->bind($request)
+            ->where('batch', '[0-9]+');
+        $route->setParameter('batch', $batch);
+
+        $action->read($request, $route, response()->noContent());
+
+        $this->assertDatabaseHas('swagger_entries', [
+            'type'    => Entry::TYPE_ROUTE_WHERES,
+            'content' => json_encode([
+                'batch' => '[0-9]+',
+            ]),
+        ]);
+    }
+
+    /**
      * @return Closure[][]
      */
     public function responses(): array

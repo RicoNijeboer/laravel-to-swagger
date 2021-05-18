@@ -31,10 +31,18 @@ class ReadRouteInformationAction
         $batch = $this->createBatch(strtoupper($request->getMethod()), $route, $response);
 
         $parametersEntry = $this->createParametersEntry($batch, $route);
+        $parametersEntry = $this->createParametersWheresEntry($batch, $route);
         $rulesEntry = $this->createRulesEntry($batch, $rules);
         $responseEntry = $this->createResponseEntry($batch, $response);
     }
 
+    /**
+     * @param string          $method
+     * @param Route           $route
+     * @param SymfonyResponse $response
+     *
+     * @return Batch
+     */
     protected function createBatch(string $method, Route $route, SymfonyResponse $response): Batch
     {
         $batch = new Batch();
@@ -51,6 +59,12 @@ class ReadRouteInformationAction
         return $batch;
     }
 
+    /**
+     * @param Batch $batch
+     * @param array $rules
+     *
+     * @return Entry
+     */
     protected function createRulesEntry(Batch $batch, array $rules = []): Entry
     {
         $entry = new Entry();
@@ -64,6 +78,12 @@ class ReadRouteInformationAction
         return $entry;
     }
 
+    /**
+     * @param Batch           $batch
+     * @param SymfonyResponse $response
+     *
+     * @return Entry
+     */
     protected function createResponseEntry(Batch $batch, SymfonyResponse $response): Entry
     {
         $entry = new Entry();
@@ -80,6 +100,12 @@ class ReadRouteInformationAction
         return $entry;
     }
 
+    /**
+     * @param Batch $batch
+     * @param Route $route
+     *
+     * @return Entry
+     */
     protected function createParametersEntry(Batch $batch, Route $route): Entry
     {
         $entry = new Entry();
@@ -89,7 +115,7 @@ class ReadRouteInformationAction
         $entry->content = collect($route->parameters())->mapWithKeys(function ($value, string $parameter) use ($route) {
             $parameterValue = $route->parameter($parameter);
 
-            preg_match("/\{({$parameter})(:[\w]*)?\}/", $route->uri(), $matches);
+            preg_match("/{({$parameter})(:[\w]*)?}/", $route->uri(), $matches);
 
             return [
                 $parameter => [
@@ -98,6 +124,25 @@ class ReadRouteInformationAction
                 ],
             ];
         });
+
+        $entry->save();
+
+        return $entry;
+    }
+
+    /**
+     * @param Batch $batch
+     * @param Route $route
+     *
+     * @return Entry
+     */
+    protected function createParametersWheresEntry(Batch $batch, Route $route): Entry
+    {
+        $entry = new Entry();
+        $entry->batch()->associate($batch);
+
+        $entry->type = Entry::TYPE_ROUTE_WHERES;
+        $entry->content = $route->wheres;
 
         $entry->save();
 
