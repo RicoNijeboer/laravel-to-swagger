@@ -2,6 +2,13 @@
 
 All notable changes will be documented here.
 
+## v2.2.1 - 2021-05-19
+
+**Bugfixes**
+
+- When you have multiple routes on the same uri with different methods, it now displays all possible methods.
+- It stores tags correctly (based on the documentation) again.
+
 ## v2.2.0 - 2021-05-15
 
 ### Changes

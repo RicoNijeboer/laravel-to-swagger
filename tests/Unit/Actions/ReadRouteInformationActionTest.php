@@ -8,7 +8,9 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
 use RicoNijeboer\Swagger\Actions\ReadRouteInformationAction;
 use RicoNijeboer\Swagger\Models\Batch;
+use RicoNijeboer\Swagger\Models\Contracts\Model;
 use RicoNijeboer\Swagger\Models\Entry;
+use RicoNijeboer\Swagger\Tests\App\Http\Controllers\TestController;
 use RicoNijeboer\Swagger\Tests\TestCase;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
@@ -226,20 +228,20 @@ class ReadRouteInformationActionTest extends TestCase
     /**
      * @test
      */
-     public function when_the_route_has_a_separate_domain_it_is_stored_in_the_batch()
-     {
-         /** @var ReadRouteInformationAction $action */
-         $action = resolve(ReadRouteInformationAction::class);
-         $request = new Request();
-         $route = Route::domain('other.example.com')->get('batches', fn () => response()->noContent())->bind($request);
+    public function when_the_route_has_a_separate_domain_it_is_stored_in_the_batch()
+    {
+        /** @var ReadRouteInformationAction $action */
+        $action = resolve(ReadRouteInformationAction::class);
+        $request = new Request();
+        $route = Route::domain('other.example.com')->get('batches', fn () => response()->noContent())->bind($request);
 
-         $action->read($request, $route, response()->noContent());
+        $action->read($request, $route, response()->noContent());
 
-         /** @var Batch $batch */
-         $batch = Batch::query()->latest()->firstOrFail();
+        /** @var Batch $batch */
+        $batch = Batch::query()->latest()->firstOrFail();
 
-         $this->assertNotNull($batch->route_domain);
-     }
+        $this->assertNotNull($batch->route_domain);
+    }
 
     /**
      * @test

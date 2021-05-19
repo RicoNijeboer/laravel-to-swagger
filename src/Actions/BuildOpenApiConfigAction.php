@@ -103,19 +103,25 @@ class BuildOpenApiConfigAction
      */
     protected function getPaths(): array
     {
-        $batches = $this->getBatches();
         $paths = [];
-        $batches->map(function (Batch $batch) {
-            return $this->buildBatchConfig($batch);
-        })
+        $this->getBatches()
+            ->map(function (Batch $batch) {
+                return $this->buildBatchConfig($batch);
+            })
             ->each(function (array $path) use (&$paths) {
                 $uri = key($path);
                 $method = key($path[$uri]);
 
                 if (array_key_exists($uri, $paths)) {
-                    foreach ($path[$uri][$method]['responses'] as $responseCode => $response) {
-                        $paths[$uri][$method]['responses'][$responseCode] = $response;
+                    if (array_key_exists($method, $paths[$uri])) {
+                        foreach ($path[$uri][$method]['responses'] as $responseCode => $response) {
+                            $paths[$uri][$method]['responses'][$responseCode] = $response;
+                        }
+
+                        return;
                     }
+
+                    $paths[$uri][$method] = $path[$uri][$method];
 
                     return;
                 }
