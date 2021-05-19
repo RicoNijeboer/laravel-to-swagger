@@ -159,6 +159,7 @@ class SwaggerReaderTest extends TestCase
                 ->bind($request);
         });
 
+        $middleware->handle($request, fn() => response()->noContent());
         $middleware->terminate($request, response()->noContent());
 
         $this->assertDatabaseMissing('swagger_batches', [
@@ -187,7 +188,8 @@ class SwaggerReaderTest extends TestCase
         /** @var SwaggerReader $middleware */
         $middleware = resolve(SwaggerReader::class);
 
-        $middleware->terminate($request, $response, 'tag-one', 'tag-two');
+        $middleware->handle($request, fn () => $response, 'tag-one', 'tag-two');
+        $middleware->terminate($request, $response);
 
         $this->assertDatabaseHas('swagger_tags', ['tag' => 'tag-one']);
         $this->assertDatabaseHas('swagger_tags', ['tag' => 'tag-two']);

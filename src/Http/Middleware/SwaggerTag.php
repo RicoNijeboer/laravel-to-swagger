@@ -16,6 +16,9 @@ class SwaggerTag
 {
     use AttachesTagsToBatches;
 
+    /** @var string[] */
+    private array $tags;
+
     /**
      * @param Request         $request
      * @param Closure         $next
@@ -25,16 +28,17 @@ class SwaggerTag
      */
     public function handle(Request $request, Closure $next, ...$tags)
     {
+        $this->tags = $tags;
+
         return $next($request);
     }
 
     /**
-     * @param Request         $request
-     * @param Response        $response
-     * @param string|string[] ...$tags
+     * @param Request  $request
+     * @param Response $response
      */
-    public function terminate(Request $request, Response $response, ...$tags)
+    public function terminate(Request $request, Response $response)
     {
-        $this->attachTags($request, $response, $tags, true);
+        $this->attachTags($request, $response, $this->tags, true);
     }
 }

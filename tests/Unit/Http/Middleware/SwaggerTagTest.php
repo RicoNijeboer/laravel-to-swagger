@@ -41,7 +41,7 @@ class SwaggerTagTest extends TestCase
         $middleware->handle($request, fn () => $response, 'add');
 
         // Simulate what happens after a response has been sent
-        $middleware->terminate($request, $response, 'add');
+        $middleware->terminate($request, $response);
 
         $this->assertDatabaseHas('swagger_tags', [
             'tag' => 'add',

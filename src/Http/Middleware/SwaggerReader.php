@@ -23,6 +23,9 @@ class SwaggerReader
 
     protected ReadRouteInformationAction $readRouteInformationAction;
 
+    /** @var string[] */
+    protected array $tags;
+
     /**
      * SwaggerReader constructor.
      *
@@ -36,13 +39,14 @@ class SwaggerReader
     /**
      * @param Request         $request
      * @param Closure         $next
-     * @param string|string[] ...$tags
+     * @param string[]|string ...$tags
      *
      * @return mixed
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next, ...$tags)
     {
         $this->rules = [];
+        $this->tags = $tags;
 
         Validator::onValidate(function (array $addedRules, array $data = []) {
             $parsed = (new ValidationRuleParser($data))->explode($addedRules);
@@ -53,7 +57,7 @@ class SwaggerReader
         return $next($request);
     }
 
-    public function terminate(Request $request, Response $response, ...$tags)
+    public function terminate(Request $request, Response $response)
     {
         $shouldEvaluate = $this->shouldEvaluate($request, $response);
 
@@ -62,7 +66,7 @@ class SwaggerReader
             $this->read($request, $response, $this->rules);
         }
 
-        $this->attachTags($request, $response, $tags);
+        $this->attachTags($request, $response, $this->tags);
     }
 
     /**
