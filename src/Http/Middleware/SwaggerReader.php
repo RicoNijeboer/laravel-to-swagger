@@ -24,7 +24,7 @@ class SwaggerReader
     protected ReadRouteInformationAction $readRouteInformationAction;
 
     /** @var string[] */
-    protected array $tags;
+    protected array $tags = [];
 
     /**
      * SwaggerReader constructor.
