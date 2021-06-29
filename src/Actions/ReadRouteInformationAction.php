@@ -3,6 +3,7 @@
 namespace RicoNijeboer\Swagger\Actions;
 
 use Illuminate\Routing\Route;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Str;
 use RicoNijeboer\Swagger\Models\Batch;
 use RicoNijeboer\Swagger\Models\Entry;
@@ -21,9 +22,12 @@ class ReadRouteInformationAction
 
     private ObfuscateJsonAction $obfuscate;
 
-    public function __construct(ObfuscateJsonAction $obfuscate)
+    private Router $router;
+
+    public function __construct(ObfuscateJsonAction $obfuscate, Router $router)
     {
         $this->obfuscate = $obfuscate;
+        $this->router = $router;
     }
 
     public function read(SymfonyRequest $request, Route $route, SymfonyResponse $response, array $rules = [])
@@ -32,6 +36,7 @@ class ReadRouteInformationAction
 
         $parametersEntry = $this->createParametersEntry($batch, $route);
         $parametersEntry = $this->createParametersWheresEntry($batch, $route);
+        $middlewareEntry = $this->createMiddlewareEntry($batch, $route);
         $rulesEntry = $this->createRulesEntry($batch, $rules);
         $responseEntry = $this->createResponseEntry($batch, $response);
     }
@@ -143,6 +148,25 @@ class ReadRouteInformationAction
 
         $entry->type = Entry::TYPE_ROUTE_WHERES;
         $entry->content = $route->wheres;
+
+        $entry->save();
+
+        return $entry;
+    }
+
+    /**
+     * @param Batch $batch
+     * @param Route $route
+     *
+     * @return Entry
+     */
+    protected function createMiddlewareEntry(Batch $batch, Route $route): Entry
+    {
+        $entry = new Entry();
+        $entry->batch()->associate($batch);
+
+        $entry->type = Entry::TYPE_ROUTE_MIDDLEWARE;
+        $entry->content = $this->router->gatherRouteMiddleware($route);
 
         $entry->save();
 

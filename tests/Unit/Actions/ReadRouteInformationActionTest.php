@@ -4,13 +4,12 @@ namespace RicoNijeboer\Swagger\Tests\Unit\Actions;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
 use RicoNijeboer\Swagger\Actions\ReadRouteInformationAction;
 use RicoNijeboer\Swagger\Models\Batch;
-use RicoNijeboer\Swagger\Models\Contracts\Model;
 use RicoNijeboer\Swagger\Models\Entry;
-use RicoNijeboer\Swagger\Tests\App\Http\Controllers\TestController;
 use RicoNijeboer\Swagger\Tests\TestCase;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
@@ -196,6 +195,44 @@ class ReadRouteInformationActionTest extends TestCase
                     'class'    => Batch::class,
                     'required' => true,
                 ],
+            ]),
+        ]);
+    }
+
+    /**
+     * @test
+     */
+    public function it_stores_an_entry_for_the_route_middlewares()
+    {
+        /** @var Router $router */
+        $router = resolve(Router::class);
+        /** @var ReadRouteInformationAction $action */
+        $action = resolve(ReadRouteInformationAction::class);
+        $batch = Batch::factory()->create();
+        $request = new Request();
+        $request->server->set('REQUEST_URI', 'batches/' . $batch->id);
+        $request->server->set('REQUEST_METHOD', 'GET');
+        $route = Route::middleware([
+            'api',
+            'scope:view.batches',
+        ])->get('batches/{batch}', fn () => response()->noContent())->bind($request);
+        $route->setParameter('batch', $batch);
+
+        $router->pushMiddlewareToGroup('api', 'throttle:api');
+        $router->pushMiddlewareToGroup('api', 'auth:api');
+
+        $router->aliasMiddleware('throttle', 'throttle-middleware');
+        $router->aliasMiddleware('auth', 'auth-middleware');
+        $router->aliasMiddleware('scope', 'scope-middleware');
+
+        $action->read($request, $route, response()->noContent());
+
+        $this->assertDatabaseHas('swagger_entries', [
+            'type'    => Entry::TYPE_ROUTE_MIDDLEWARE,
+            'content' => json_encode([
+                'throttle-middleware:api',
+                'auth-middleware:api',
+                'scope-middleware:view.batches',
             ]),
         ]);
     }

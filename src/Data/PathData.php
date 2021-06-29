@@ -2,9 +2,14 @@
 
 namespace RicoNijeboer\Swagger\Data;
 
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
+use Laravel\Passport\Http\Middleware\CheckForAnyScope;
+use Laravel\Passport\Http\Middleware\CheckScopes;
 use RicoNijeboer\Swagger\Models\Batch;
 use RicoNijeboer\Swagger\Support\RuleHelper;
 use RicoNijeboer\Swagger\Support\ValueHelper;
@@ -36,6 +41,8 @@ class PathData
         'schema'      => ['type' => 'string'],
     ];
 
+    public array $security = [];
+
     protected Batch $batch;
 
     /**
@@ -61,6 +68,7 @@ class PathData
 
         $this->calculateServers($batch)
             ->calculateParameters($batch)
+            ->calculateMiddleware($batch)
             ->calculateProperties($batch)
             ->calculateRequired($batch)
             ->calculateResponse($batch);
@@ -207,6 +215,74 @@ class PathData
                 'url' => $batch->route_domain,
             ];
         }
+
+        return $this;
+    }
+
+    /**
+     * @param Batch $batch
+     *
+     * @return $this
+     */
+    protected function calculateMiddleware(Batch $batch): PathData
+    {
+        if ($batch->middlewareEntry()->doesntExist()) {
+            $this->security = [];
+
+            return $this;
+        }
+
+        $allMiddleware = collect($batch->middlewareEntry->content);
+        $middlewareOfInstance = function ($instance, bool $collection = true) use ($allMiddleware) {
+            $instance = Arr::wrap($instance);
+
+            $filter = $collection ? 'filter' : 'first';
+
+            return $allMiddleware
+                ->{$filter}(function (string $middleware) use ($instance) {
+                    $middleware = resolve(explode(':', $middleware, 2)[0]);
+
+                    foreach ($instance as $class) {
+                        if ($middleware instanceof $class) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                });
+        };
+
+        /** @var Collection $authenticateMiddlewares */
+        $authenticateMiddlewares = $middlewareOfInstance(Authenticate::class);
+
+        $this->security = $authenticateMiddlewares
+            ->map(function (string $middleware) use ($middlewareOfInstance) {
+                $parameters = explode(':', $middleware, 2)[1];
+                $parameters = explode(',', $parameters);
+
+                return collect($parameters)
+                    ->map(function (string $parameter) use ($middlewareOfInstance) {
+                        /** @var Collection $checkScopesMiddleware */
+                        $checkScopesMiddleware = $middlewareOfInstance([CheckScopes::class, CheckForAnyScope::class]);
+
+                        if (Config::get("auth.guards.{$parameter}.driver") === 'passport' && !empty($checkScopesMiddleware)) {
+                            $scopes = $checkScopesMiddleware
+                                ->flatMap(fn (string $middleware) => explode(',', explode(':', $middleware, 2)[1]))
+                                ->values()
+                                ->toArray();
+
+                            return [
+                                $parameter => $scopes,
+                            ];
+                        }
+
+                        return $parameter;
+                    })
+                    ->all();
+            })
+            ->flatten(1)
+            ->values()
+            ->toArray();
 
         return $this;
     }

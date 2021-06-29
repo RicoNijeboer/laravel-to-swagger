@@ -172,6 +172,10 @@ class BuildOpenApiConfigAction
             $batchConfig['parameters'] = $pathData->parameters;
         }
 
+        if (!empty($pathData->security)) {
+            $batchConfig['security'] = $pathData->security;
+        }
+
         if (!empty($pathData->servers)) {
             $batchConfig['servers'] = $pathData->servers;
         }

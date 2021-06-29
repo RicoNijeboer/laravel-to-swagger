@@ -2,10 +2,14 @@
 
 namespace RicoNijeboer\Swagger\Tests\Unit\Actions;
 
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Laravel\Passport\Http\Middleware\CheckForAnyScope;
+use Laravel\Passport\Http\Middleware\CheckScopes;
+use Laravel\Passport\Passport;
 use RicoNijeboer\Swagger\Actions\BuildOpenApiConfigAction;
 use RicoNijeboer\Swagger\Exceptions\MalformedServersException;
 use RicoNijeboer\Swagger\Models\Batch;
@@ -507,6 +511,124 @@ class BuildOpenApiConfigActionTest extends TestCase
     }
 
     /**
+     * @test
+     */
+    public function it_adds_the_security_schemes_to_the_paths()
+    {
+        config()->set('auth.guards', [
+            'api' => [
+                'driver'   => 'passport',
+                'provider' => 'users',
+            ],
+        ]);
+        Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
+            ->has(Entry::factory()->validation())
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->middleware([
+                Authenticate::class . ':api',
+            ]))
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
+            ->create();
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+
+        $result = $action->build();
+
+        $this->assertArrayHasKeys(
+            [
+                'paths./products.get.security.0' => 'api',
+            ],
+            $result
+        );
+    }
+
+    /**
+     * @test
+     * @dataProvider checkScopeMiddlewareClasses
+     */
+    public function it_adds_the_security_schemes_to_the_paths_and_adds_the_scopes_needed_too(string $checkScopeClass)
+    {
+        config()->set('auth.guards', [
+            'api' => [
+                'driver'   => 'passport',
+                'provider' => 'users',
+            ],
+        ]);
+
+        Passport::tokensCan(['check-status' => 'Lorem ipsum.']);
+
+        Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
+            ->has(Entry::factory()->validation())
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->middleware([
+                Authenticate::class . ':api',
+                $checkScopeClass . ':check-status',
+            ]))
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
+            ->create();
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+
+        $result = $action->build();
+
+        $this->assertArrayHasKeys(
+            [
+                'paths./products.get.security.0.api.0' => 'check-status',
+            ],
+            $result
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_adds_the_security_schemes_to_the_paths_and_adds_the_scopes_for_both_scope_middlewares_if_they_are_both_added()
+    {
+        $checkScopeMiddlewareClasses = $this->checkScopeMiddlewareClasses();
+
+        config()->set('auth.guards', [
+            'api' => [
+                'driver'   => 'passport',
+                'provider' => 'users',
+            ],
+        ]);
+        Passport::tokensCan($scopes = ['check-status' => 'Lorem ipsum.', 'lorem' => 'ipsum']);
+
+        Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
+            ->has(Entry::factory()->validation())
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->middleware(
+                array_merge(
+                    [
+                        Authenticate::class . ':api',
+                    ],
+                    array_map(
+                        fn (string $middlewareClass, int $index) => $middlewareClass . ':' . $scopes[$index],
+                        $checkScopeMiddlewareClasses,
+                        array_keys(array_keys($checkScopeMiddlewareClasses))
+                    )
+                )
+            ))
+            ->has(Entry::factory()->parameters(['batch' => ['class' => Batch::class, 'required' => true]]))
+            ->create();
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+
+        $result = $action->build();
+
+        $this->assertArrayHasKeys(
+            [
+                'paths./products.get.security.0.api.0' => 'check-status',
+                'paths./products.get.security.0.api.1' => 'lorem',
+            ],
+            $result
+        );
+    }
+
+    /**
      * @return array
      */
     public function malformedServers(): array
@@ -535,6 +657,14 @@ class BuildOpenApiConfigActionTest extends TestCase
                     ],
                 ],
             ],
+        ];
+    }
+
+    public function checkScopeMiddlewareClasses(): array
+    {
+        return [
+            'CheckScopes'      => [CheckScopes::class],
+            'CheckForAnyScope' => [CheckForAnyScope::class],
         ];
     }
 }

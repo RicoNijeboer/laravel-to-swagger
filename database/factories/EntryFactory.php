@@ -24,18 +24,24 @@ class EntryFactory extends Factory
 
     public function response(SymfonyResponse $response = null): self
     {
-        return $this->state(function () use ($response) {
-            return [
-                'type'    => Entry::TYPE_RESPONSE,
-                'content' => [
-                    'contentType' => is_null($response) ? 'application/json' : $response->headers->get('Content-Type'),
-                    'response'    => is_null($response) ? [
-                        'id'   => $this->faker->randomNumber(),
-                        'name' => $this->faker->name,
-                    ] : $response->getContent(),
-                ],
-            ];
-        });
+        return $this->state(fn () => [
+            'type'    => Entry::TYPE_RESPONSE,
+            'content' => [
+                'contentType' => is_null($response) ? 'application/json' : $response->headers->get('Content-Type'),
+                'response'    => is_null($response) ? [
+                    'id'   => $this->faker->randomNumber(),
+                    'name' => $this->faker->name,
+                ] : $response->getContent(),
+            ],
+        ]);
+    }
+
+    public function middleware(array $middleware = []): self
+    {
+        return $this->state(fn () => [
+            'type'    => Entry::TYPE_ROUTE_MIDDLEWARE,
+            'content' => $middleware ?? [],
+        ]);
     }
 
     public function validation(array $rules = null): self
