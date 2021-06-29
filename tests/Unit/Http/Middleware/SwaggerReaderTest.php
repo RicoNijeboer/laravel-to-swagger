@@ -200,40 +200,4 @@ class SwaggerReaderTest extends TestCase
 
         $this->assertCount(2, $batch->tags);
     }
-
-    /**
-     * @test
-     */
-    public function it_stores_the_resolved_list_of_middlewares_as_an_entry_on_the_batch()
-    {
-        $response = response()->noContent();
-        $request = new Request();
-        $action = function () use ($response) {
-            Validator::make(['email' => 'rico@riconijeboer.nl'], ['email' => ['email', 'required']]);
-            Validator::make(['email' => 'rico@riconijeboer.nl'], ['name' => ['nullable']]);
-
-            return $response;
-        };
-        $route = Route::middleware([
-            'api',
-            'scope:check-status',
-        ])
-            ->get('index', $action)
-            ->bind($request);
-        $request->setRouteResolver(fn () => $route);
-
-        /** @var Router $router */
-        $router = resolve(Router::class);
-
-        $router->pushMiddlewareToGroup('api', 'throttle:api');
-        $router->pushMiddlewareToGroup('api', 'auth:api');
-
-        $middleware = $router->gatherRouteMiddleware($route);
-
-        /** @var SwaggerReader $middleware */
-        $middleware = resolve(SwaggerReader::class);
-
-        $middleware->handle($request, fn () => $response, 'tag-one', 'tag-two');
-        $middleware->terminate($request, $response);
-    }
 }
