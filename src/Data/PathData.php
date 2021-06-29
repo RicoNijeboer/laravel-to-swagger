@@ -152,7 +152,10 @@ class PathData
             case 'application/json':
                 $responseBody = $batch->responseEntry->content['response'];
 
-                $this->response['schema'] = ValueHelper::jsonResponseProperty(is_string($responseBody) ? json_decode($responseBody, true) : $responseBody);
+                $exampleBody = is_string($responseBody) ? json_decode($responseBody, true) : $responseBody;
+
+                $this->response['schema'] = ValueHelper::jsonResponseProperty($exampleBody);
+                $this->response['example'] = $exampleBody;
                 break;
             case 'text/html':
                 $this->response['schema'] = [

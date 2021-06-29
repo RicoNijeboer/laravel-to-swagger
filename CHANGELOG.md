@@ -6,6 +6,7 @@ All notable changes will be documented here.
 
 ### Changes
 
+- An example response body is now added for `application/json` responses. This body is completely anonymous, but is more representative of your actual response.
 - Security schemes are now applied to paths
     - When you use `laravel/passport` and your route requires certain `scopes` it also adds these to your path.
 
