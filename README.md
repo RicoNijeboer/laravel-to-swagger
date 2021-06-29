@@ -7,9 +7,42 @@ This package aims to bring the easiest path to creating a Swagger / OpenApi 3 co
 
 ## Installation
 
+For local only installation go [here](#local-only-installation)
+
 1. `composer require riconijeboer/laravel-to-swagger`
 1. `php artisan vendor:publish --provider="RicoNijeboer\Swagger\SwaggerServiceProvider"`
     - This will publish the package's config-file and migrations
+
+### Local Only installation
+
+1. `composer require riconijeboer/laravel-to-swagger --dev`
+1. `php artisan vendor:publish --provider="RicoNijeboer\Swagger\SwaggerServiceProvider"`
+    - This will publish the package's config-file and migrations
+1. Finally, you should prevent the Swagger package from being [auto-discovered](https://laravel.com/docs/8.x/packages#package-discovery) by adding the following to your `composer.json` file:
+   ```
+   "extra": {
+       "laravel": {
+           "dont-discover": [
+               "riconijeboer/laravel-to-swagger"
+           ]
+       }
+   }
+   ```
+1. Now that auto-discovery is disabled you should manually register the service provider in the `register` method of your `App\Providers\AppServiceProvider` class.
+   In the example we only enable the package when we are running in a `local` environment.
+   ```php
+   /**
+    * Register any application services.
+    *
+    * @return void
+    */
+   public function register()
+   {
+       if ($this->app->environment('local')) {
+           $this->app->register(\RicoNijeboer\Swagger\SwaggerServiceProvider::class);
+       }
+   }
+   ```
 
 ### Requirements
 
