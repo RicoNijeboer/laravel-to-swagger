@@ -171,8 +171,12 @@ class RuleHelper
         $val = (static::isArray($rules) || static::isString($rules)) ? 'intval' : 'floatval';
 
         foreach ($rules as $rule) {
-            if (Str::startsWith($rule, 'max:')) {
-                return $val(explode(':', $rule, 2)[1]);
+            $ruleArray = Arr::wrap($rule);
+
+            foreach ($ruleArray as $ruleItem) {
+                if (Str::startsWith($ruleItem, 'max:')) {
+                    return $valFunc(explode(':', $ruleItem, 2)[1]);
+                }
             }
         }
 

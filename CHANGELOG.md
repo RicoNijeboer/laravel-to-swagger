@@ -2,6 +2,12 @@
 
 All notable changes will be documented here.
 
+## v2.3.3 - 2021-08-24
+
+**Bugfixes**
+
+- Fixed error with the `Str::startsWith` method throwing an exception when haystack is an array
+
 ## v2.3.2 - 2021-08-24
 
 **Bugfixes**
