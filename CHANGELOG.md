@@ -2,7 +2,7 @@
 
 All notable changes will be documented here.
 
-## v2.3.0 - [RELEASE DATE HERE]
+## v2.3.0 - 2021-08-24
 
 ### Changes
 
