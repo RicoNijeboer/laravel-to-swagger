@@ -10,6 +10,11 @@ All notable changes will be documented here.
 - Security schemes are now applied to paths
     - When you use `laravel/passport` and your route requires certain `scopes` it also adds these to your path.
 
+**Bugfixes**
+
+- Fixed a bug in the ValueHelper::jsonResponseProperty where it failed when the `$value` given is an empty array
+  - https://github.com/RicoNijeboer/laravel-to-swagger/issues/21
+
 ## v2.2.1 - 2021-05-19
 
 **Bugfixes**

@@ -18,7 +18,7 @@ class ValueHelper
      */
     public static function jsonResponseProperty($value): array
     {
-        if (is_null($value)) {
+        if (is_null($value) || empty($value)) {
             return [
                 'nullable' => true,
             ];
