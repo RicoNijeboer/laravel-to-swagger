@@ -139,6 +139,8 @@ class BuildOpenApiConfigAction
                 'validationRulesEntry',
                 'responseEntry',
             ])
+            ->whereHas('validationRulesEntry')
+            ->whereHas('responseEntry')
             ->cursor();
     }
 

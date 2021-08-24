@@ -14,6 +14,8 @@ All notable changes will be documented here.
 
 - Fixed a bug in the ValueHelper::jsonResponseProperty where it failed when the `$value` given is an empty array
   - https://github.com/RicoNijeboer/laravel-to-swagger/issues/21
+- It now only loads batches it can display
+  - https://github.com/RicoNijeboer/laravel-to-swagger/issues/22
 
 ## v2.2.1 - 2021-05-19
 
