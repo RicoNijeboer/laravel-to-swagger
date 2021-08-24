@@ -2,6 +2,12 @@
 
 All notable changes will be documented here.
 
+## v2.3.2 - 2021-08-24
+
+**Bugfixes**
+
+- Fixed a bug where the rule helper failed with nested rule arrays
+
 ## v2.3.1 - 2021-08-24
 
 **Bugfixes**

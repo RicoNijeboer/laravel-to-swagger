@@ -149,8 +149,12 @@ class RuleHelper
         $valFunc = (static::isArray($rules) || static::isString($rules)) ? 'intval' : 'floatval';
 
         foreach ($rules as $rule) {
-            if (Str::startsWith($rule, 'min:')) {
-                return $valFunc(explode(':', $rule, 2)[1]);
+            $ruleArray = Arr::wrap($rule);
+
+            foreach ($ruleArray as $ruleItem) {
+                if (Str::startsWith($ruleItem, 'min:')) {
+                    return $valFunc(explode(':', $ruleItem, 2)[1]);
+                }
             }
         }
 
