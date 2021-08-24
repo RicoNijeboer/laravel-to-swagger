@@ -32,8 +32,9 @@ class SwaggerServiceProvider extends PackageServiceProvider
         $this->aliasMiddleware('tag', SwaggerTag::class);
         $this->aliasMiddleware('reader', SwaggerReader::class);
 
-        // Making the reader a singleton ensures that the executed rules still get stored.
+        // Making the reader a singleton ensures that the executed rules & applied tags still get stored.
         $this->app->singleton(SwaggerReader::class);
+        $this->app->singleton(SwaggerTag::class);
     }
 
     /**

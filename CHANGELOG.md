@@ -2,6 +2,12 @@
 
 All notable changes will be documented here.
 
+## v2.3.1 - 2021-08-24
+
+**Bugfixes**
+
+- Fixed a bug where tags were not applied when using the `swagger_tag` middleware.
+
 ## v2.3.0 - 2021-08-24
 
 ### Changes
