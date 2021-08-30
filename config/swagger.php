@@ -22,6 +22,23 @@ return [
         'title'       => 'Laravel to Swagger',
         'description' => null,
         'version'     => '0.0.1',
+
+        'logo' => [
+            /*
+             * The URL pointing to the spec logo.
+             * MUST be in the format of a URL.
+             * It SHOULD be an absolute URL so your API definition is usable from any location
+             */
+            'url'              => null,
+            /*
+             * Background color to be used. MUST be RGB color in [hexadecimal format]
+             */
+            'background-color' => '#ffffff',
+            /*
+             * Text to use for alt tag on the logo. Defaults to 'logo' if nothing is provided.
+             */
+            'alt-text'         => null,
+        ],
     ],
 
     /*

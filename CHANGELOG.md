@@ -2,6 +2,13 @@
 
 All notable changes will be documented here.
 
+## v2.4.2 - 30-08-2021
+
+**Changes**
+
+- ![redoc-only](https://img.shields.io/badge/Redoc%20Only-red.svg) You can now add a logo to your redoc config
+  - [Documentation](https://github.com/RicoNijeboer/laravel-to-swagger#adding-a-logo)
+
 ## v2.4.1 - 30-08-2021
 
 **Changes**

@@ -60,11 +60,23 @@ class BuildOpenApiConfigAction
      */
     protected function getInfo(): array
     {
-        return array_filter([
+        $info = array_filter([
             'title'       => config('swagger.info.title'),
             'description' => config('swagger.info.description'),
             'version'     => config('swagger.info.version'),
         ]);
+
+        $logo = array_filter([
+            'url'             => config('swagger.info.logo.url'),
+            'backgroundColor' => config('swagger.info.logo.background-color'),
+            'altText'         => config('swagger.info.logo.alt-text'),
+        ]);
+
+        if (\array_key_exists('url', $logo)) {
+            $info['x-logo'] = $logo;
+        }
+
+        return $info;
     }
 
     /**

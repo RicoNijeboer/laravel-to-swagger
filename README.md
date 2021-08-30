@@ -297,6 +297,26 @@ return [
 ];
 ```
 
+### Adding a logo
+![redoc-only](https://img.shields.io/badge/Redoc%20Only-red.svg)
+
+You can add a logo to the sidebar in your Redoc visualization by adding a full-url to the `swagger.info.logo.url`.
+
+> The logo is only displayed when you use the Redoc documentation route.
+
+```php
+return [
+    //...
+    'info' => [
+        //...
+        'logo' => [
+            'url' => 'https://picsum.photos/300/200',
+        ],
+    ],
+    //...
+];
+```
+
 ## Testing
 
 ```
