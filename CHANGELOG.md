@@ -4,6 +4,10 @@ All notable changes will be documented here.
 
 ## v2.3.4 - ...
 
+**Changes**
+
+- The `RicoNijeboer\Swagger\SwaggerServiceProvider` now ensures that the `RicoNijeboer\Swagger\Providers\ValidationServiceProvider` is registered, making the documentation for development only installs correct again.
+
 **Bugfixes**
 
 - Fixed an error that occurred when displaying any request that contained a `max` rule in the request validation

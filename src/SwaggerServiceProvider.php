@@ -5,6 +5,7 @@ namespace RicoNijeboer\Swagger;
 use Illuminate\Routing\Router;
 use RicoNijeboer\Swagger\Http\Middleware\SwaggerReader;
 use RicoNijeboer\Swagger\Http\Middleware\SwaggerTag;
+use RicoNijeboer\Swagger\Providers\ValidationServiceProvider;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -20,6 +21,7 @@ class SwaggerServiceProvider extends PackageServiceProvider
             ->hasMigration('create_swagger_tags_table')
             ->hasMigration('create_swagger_batch_tag_table');
 
+        $this->ensureValidationServiceProviderLoaded();
         $this->registerMiddleware();
         $this->registerViews();
     }
@@ -61,5 +63,12 @@ class SwaggerServiceProvider extends PackageServiceProvider
     protected function registerViews(): void
     {
         $this->loadViewsFrom($this->package->basePath('/../resources/views'), $this->package->shortName());
+    }
+
+    protected function ensureValidationServiceProviderLoaded(): void
+    {
+        if (!$this->app->getProviders(ValidationServiceProvider::class)) {
+            $this->app->register(ValidationServiceProvider::class);
+        }
     }
 }
