@@ -8,8 +8,11 @@ use Illuminate\Support\Str;
 use RicoNijeboer\Swagger\Models\Batch;
 use RicoNijeboer\Swagger\Models\Entry;
 use RicoNijeboer\Swagger\Support\Concerns\HelperMethods;
+use RicoNijeboer\Swagger\Support\RuleHelper;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+
+use function array_key_exists;
 
 /**
  * Class ReadRouteInformationAction
@@ -34,7 +37,7 @@ class ReadRouteInformationAction
     {
         $batch = $this->createBatch(strtoupper($request->getMethod()), $route, $response);
 
-        $parametersEntry = $this->createParametersEntry($batch, $route);
+        $parametersEntry = $this->createParametersEntry($batch, $route, $request, $rules);
         $parametersEntry = $this->createParametersWheresEntry($batch, $route);
         $middlewareEntry = $this->createMiddlewareEntry($batch, $route);
         $rulesEntry = $this->createRulesEntry($batch, $rules);
@@ -106,18 +109,16 @@ class ReadRouteInformationAction
     }
 
     /**
-     * @param Batch $batch
-     * @param Route $route
+     * @param Batch          $batch
+     * @param Route          $route
+     * @param SymfonyRequest $request
+     * @param mixed[]        $rules
      *
      * @return Entry
      */
-    protected function createParametersEntry(Batch $batch, Route $route): Entry
+    protected function createParametersEntry(Batch $batch, Route $route, SymfonyRequest $request, array &$rules): Entry
     {
-        $entry = new Entry();
-        $entry->batch()->associate($batch);
-
-        $entry->type = Entry::TYPE_ROUTE_PARAMETERS;
-        $entry->content = collect($route->parameters())->mapWithKeys(function ($value, string $parameter) use ($route) {
+        $parameters = collect($route->parameters())->mapWithKeys(function ($value, string $parameter) use ($route) {
             $parameterValue = $route->parameter($parameter);
 
             preg_match("/{({$parameter})(:[\w]*)?}/", $route->uri(), $matches);
@@ -130,6 +131,24 @@ class ReadRouteInformationAction
             ];
         });
 
+        foreach ($request->query->keys() as $queryKey) {
+            if (array_key_exists($queryKey, $rules)) {
+                $parameters->offsetSet($queryKey, [
+                    'class'    => null,
+                    'type'     => RuleHelper::dataTypeString(RuleHelper::dataType($rules[$queryKey])),
+                    'required' => RuleHelper::isRequired($rules[$queryKey]),
+                    'inQuery'  => true,
+                    'rules'    => $rules[$queryKey],
+                ]);
+
+                unset($rules[$queryKey]);
+            }
+        }
+
+        $entry = new Entry();
+        $entry->batch()->associate($batch);
+        $entry->type = Entry::TYPE_ROUTE_PARAMETERS;
+        $entry->content = $parameters;
         $entry->save();
 
         return $entry;

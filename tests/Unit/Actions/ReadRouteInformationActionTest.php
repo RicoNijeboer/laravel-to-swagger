@@ -202,6 +202,71 @@ class ReadRouteInformationActionTest extends TestCase
     /**
      * @test
      */
+    public function it_stores_the_validated_get_parameters_in_the_route_parameters_entry()
+    {
+        /** @var ReadRouteInformationAction $action */
+        $action = resolve(ReadRouteInformationAction::class);
+        $request = new Request();
+        $request->server->set('REQUEST_URI', 'batches');
+        $request->server->set('REQUEST_METHOD', 'GET');
+        $request->query->set('limit', 50);
+        $request->query->set('with', []);
+        $route = Route::get('batches', fn () => response()->noContent())->bind($request);
+
+        $action->read($request, $route, response()->noContent(), [
+            'limit' => ['required', 'numeric'],
+            'with'  => ['nullable', 'array'],
+        ]);
+
+        $this->assertDatabaseHas('swagger_entries', [
+            'type'    => Entry::TYPE_ROUTE_PARAMETERS,
+            'content' => json_encode([
+                'limit' => [
+                    'class'    => null,
+                    'type'     => 'number',
+                    'required' => true,
+                    'inQuery'  => true,
+                    'rules'    => ['required', 'numeric'],
+                ],
+                'with'  => [
+                    'class'    => null,
+                    'type'     => 'array',
+                    'required' => false,
+                    'inQuery'  => true,
+                    'rules'    => ['nullable', 'array'],
+                ],
+            ]),
+        ]);
+    }
+
+    /**
+     * @test
+     */
+    public function it_does_not_store_the_validated_get_parameters_in_the_validation_rules_entry()
+    {
+        /** @var ReadRouteInformationAction $action */
+        $action = resolve(ReadRouteInformationAction::class);
+        $request = new Request();
+        $request->server->set('REQUEST_URI', 'batches');
+        $request->server->set('REQUEST_METHOD', 'GET');
+        $request->query->set('limit', 50);
+        $request->query->set('with', []);
+        $route = Route::get('batches', fn () => response()->noContent())->bind($request);
+
+        $action->read($request, $route, response()->noContent(), [
+            'limit' => ['required', 'numeric'],
+            'with'  => ['nullable', 'array'],
+        ]);
+
+        /** @var Batch $batch */
+        $batch = Batch::query()->latest()->firstOrFail();
+
+        $this->assertArrayDoesntHaveKeys(['limit', 'with'], $batch->validationRulesEntry->content->jsonSerialize());
+    }
+
+    /**
+     * @test
+     */
     public function it_stores_an_entry_for_the_route_middlewares()
     {
         /** @var Router $router */
@@ -218,8 +283,10 @@ class ReadRouteInformationActionTest extends TestCase
         ])->get('batches/{batch}', fn () => response()->noContent())->bind($request);
         $route->setParameter('batch', $batch);
 
-        $router->pushMiddlewareToGroup('api', 'throttle:api');
-        $router->pushMiddlewareToGroup('api', 'auth:api');
+        $router->middlewareGroup('api', [
+            'throttle:api',
+            'auth:api',
+        ]);
 
         $router->aliasMiddleware('throttle', 'throttle-middleware');
         $router->aliasMiddleware('auth', 'auth-middleware');

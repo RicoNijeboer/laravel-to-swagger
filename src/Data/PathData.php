@@ -278,9 +278,11 @@ class PathData
                                 ->values()
                                 ->toArray();
 
-                            return [
-                                $parameter => $scopes,
-                            ];
+                            if (!empty($scopes)) {
+                                return [
+                                    $parameter => $scopes,
+                                ];
+                            }
                         }
 
                         return $parameter;

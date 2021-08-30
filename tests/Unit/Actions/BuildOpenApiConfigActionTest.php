@@ -586,7 +586,7 @@ class BuildOpenApiConfigActionTest extends TestCase
      */
     public function it_adds_the_security_schemes_to_the_paths_and_adds_the_scopes_for_both_scope_middlewares_if_they_are_both_added()
     {
-        $checkScopeMiddlewareClasses = $this->checkScopeMiddlewareClasses();
+        $checkScopeMiddlewareClasses = array_values(Arr::flatten($this->checkScopeMiddlewareClasses()));
 
         config()->set('auth.guards', [
             'api' => [
@@ -605,9 +605,9 @@ class BuildOpenApiConfigActionTest extends TestCase
                         Authenticate::class . ':api',
                     ],
                     array_map(
-                        fn (string $middlewareClass, int $index) => $middlewareClass . ':' . $scopes[$index],
+                        fn (string $middlewareClass, int $index) => $middlewareClass . ':' . array_keys($scopes)[$index],
                         $checkScopeMiddlewareClasses,
-                        array_keys(array_keys($checkScopeMiddlewareClasses))
+                        array_keys($checkScopeMiddlewareClasses)
                     )
                 )
             ))
