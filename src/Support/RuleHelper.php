@@ -168,7 +168,7 @@ class RuleHelper
      */
     public static function max(array $rules)
     {
-        $val = (static::isArray($rules) || static::isString($rules)) ? 'intval' : 'floatval';
+        $valFunc = (static::isArray($rules) || static::isString($rules)) ? 'intval' : 'floatval';
 
         foreach ($rules as $rule) {
             $ruleArray = Arr::wrap($rule);

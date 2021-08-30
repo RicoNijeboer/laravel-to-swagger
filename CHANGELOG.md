@@ -2,6 +2,12 @@
 
 All notable changes will be documented here.
 
+## v2.3.4 - ...
+
+**Bugfixes**
+
+- Fixed an error that occurred when displaying any request that contained a `max` rule in the request validation
+
 ## v2.3.3 - 2021-08-24
 
 **Bugfixes**
