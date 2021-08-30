@@ -183,6 +183,21 @@ class RuleHelper
         return null;
     }
 
+    public static function getFormat(array $rules): ?string
+    {
+        if (static::isEmail($rules)) {
+            return 'email';
+        }
+
+        $regex = static::getRegex($rules);
+
+        if (!empty($regex)) {
+            return $regex;
+        }
+
+        return null;
+    }
+
     public static function openApiProperty(string $property, array $rules, array $ruleCache): array
     {
         if (!Arr::isAssoc($rules)) {
@@ -193,19 +208,7 @@ class RuleHelper
                 'nullable' => RuleHelper::isNullable($rules),
                 'minimum'  => RuleHelper::min($rules),
                 'maximum'  => RuleHelper::max($rules),
-                'format'   => (function (array $rules) {
-                    if (static::isEmail($rules)) {
-                        return 'email';
-                    }
-
-                    $regex = static::getRegex($rules);
-
-                    if (!empty($regex)) {
-                        return $regex;
-                    }
-
-                    return null;
-                })($rules),
+                'format'   => RuleHelper::getFormat($rules),
             ]);
         }
 

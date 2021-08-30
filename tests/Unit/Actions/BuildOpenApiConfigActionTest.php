@@ -15,6 +15,7 @@ use RicoNijeboer\Swagger\Exceptions\MalformedServersException;
 use RicoNijeboer\Swagger\Models\Batch;
 use RicoNijeboer\Swagger\Models\Entry;
 use RicoNijeboer\Swagger\Models\Tag;
+use RicoNijeboer\Swagger\Support\RuleHelper;
 use RicoNijeboer\Swagger\Tests\TestCase;
 
 class BuildOpenApiConfigActionTest extends TestCase
@@ -358,6 +359,64 @@ class BuildOpenApiConfigActionTest extends TestCase
                 'paths./products.get.parameters.0.schema.type' => 'string',
                 'paths./products.get.parameters.0.required'    => true,
                 'paths./products.get.parameters.0.description' => 'Batch',
+            ],
+            $result
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_adds_the_query_parameters_to_the_paths()
+    {
+        Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
+            ->has(Entry::factory()->validation())
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters([
+                'limit'  => [
+                    'class'    => null,
+                    'type'     => 'number',
+                    'required' => true,
+                    'inQuery'  => true,
+                    'rules'    => ['required', 'numeric'],
+                ],
+                'with'   => [
+                    'class'    => null,
+                    'type'     => 'array',
+                    'required' => false,
+                    'inQuery'  => true,
+                    'rules'    => ['nullable', 'array'],
+                ],
+                'search' => [
+                    'class'    => null,
+                    'type'     => 'string',
+                    'required' => false,
+                    'inQuery'  => true,
+                    'rules'    => ['nullable', 'string', 'regex:/\d+\_[a-z]+/'],
+                ],
+            ]))
+            ->create();
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+
+        $result = $action->build();
+
+        $this->assertArrayHasKeys(
+            [
+                'paths./products.get.parameters.0.in'            => 'query',
+                'paths./products.get.parameters.0.name'          => 'limit',
+                'paths./products.get.parameters.0.schema.type'   => 'number',
+                'paths./products.get.parameters.0.required'      => true,
+                'paths./products.get.parameters.1.in'            => 'query',
+                'paths./products.get.parameters.1.name'          => 'with',
+                'paths./products.get.parameters.1.schema.type'   => 'array',
+                'paths./products.get.parameters.1.required'      => false,
+                'paths./products.get.parameters.2.in'            => 'query',
+                'paths./products.get.parameters.2.name'          => 'search',
+                'paths./products.get.parameters.2.required'      => false,
+                'paths./products.get.parameters.2.schema.type'   => 'string',
+                'paths./products.get.parameters.2.schema.format' => '\d+\_[a-z]+',
             ],
             $result
         );

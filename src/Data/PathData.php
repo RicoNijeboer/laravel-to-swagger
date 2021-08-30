@@ -184,6 +184,21 @@ class PathData
             ->map(function (array $data, string $parameter) use ($formats) {
                 ['class' => $class, 'required' => $required] = $data;
 
+                if (($data['inQuery'] ?? false) === true) {
+                    $format = RuleHelper::getFormat($data['rules']);
+
+                    return [
+                        'in'       => 'query',
+                        'required' => $required,
+                        'name'     => $parameter,
+                        'schema'   => array_merge([
+                            'type' => $data['type'],
+                        ], array_filter([
+                            'format' => !empty($format) ? $format : null,
+                        ])),
+                    ];
+                }
+
                 $hasFormat = array_key_exists($parameter, $formats);
 
                 return [

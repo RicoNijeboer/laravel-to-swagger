@@ -9,12 +9,15 @@ All notable changes will be documented here.
 - We now actually apply the example to the response so it is now readable
 - The `RicoNijeboer\Swagger\SwaggerServiceProvider` now ensures that the `RicoNijeboer\Swagger\Providers\ValidationServiceProvider` is registered, making the documentation for development only installs correct again.
   - https://github.com/RicoNijeboer/laravel-to-swagger/issues/23
+- When validated input is in the query when called it is now stored as a parameter
+  - https://github.com/RicoNijeboer/laravel-to-swagger/issues/13
 
 **Bugfixes**
 
 - Fixed an error that occurred when displaying any request that contained a `max` rule in the request validation
   - https://github.com/RicoNijeboer/laravel-to-swagger/issues/23
 - Fixed a bug in the PathData::calculateMiddleware where it threw an exception when you did not add a specific guard to your `auth` middleware.
+- Fixed failing tests (_sorry_)
 
 ## v2.3.3 - 2021-08-24
 
