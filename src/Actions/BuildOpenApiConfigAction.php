@@ -6,6 +6,7 @@ use Illuminate\Container\Container;
 use Illuminate\Contracts\Translation\Translator;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\LazyCollection;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Validator;
@@ -48,6 +49,8 @@ class BuildOpenApiConfigAction
         if (!is_null($oAuth2Schemes)) {
             Arr::set($openApi, 'components.securitySchemes', $oAuth2Schemes);
         }
+
+        $this->applyRedocConfig($openApi);
 
         return $openApi;
     }
@@ -203,5 +206,37 @@ class BuildOpenApiConfigAction
                 $pathData->method => $batchConfig,
             ],
         ];
+    }
+
+    protected function applyRedocConfig(array &$openApi)
+    {
+        $tagGroups = Config::get('swagger.redoc.tag-groups', []);
+        $defaultGroup = Config::get('swagger.redoc.default-group') ?? 'Default';
+
+        if (empty($tagGroups)) {
+            return;
+        }
+
+        $openApi['x-tagGroups'] = $tagGroups;
+
+        $groupedTags = collect($tagGroups)
+            ->flatMap(function (array $tagGroup) {
+                return $tagGroup['tags'];
+            })
+            ->toArray();
+        $ungroupedTags = collect($openApi['paths'])
+            ->flatMap(
+                fn (array $path) => collect($path)
+                    ->flatMap(fn (array $pathData) => $pathData['tags'] ?? [])
+                    ->filter(fn (string $tag) => !in_array($tag, $groupedTags))
+            )
+            ->toArray();
+
+        if (!empty($ungroupedTags)) {
+            array_unshift($openApi['x-tagGroups'], [
+                'name' => $defaultGroup,
+                'tags' => $ungroupedTags,
+            ]);
+        }
     }
 }

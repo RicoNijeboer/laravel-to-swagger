@@ -265,6 +265,33 @@ return [
     //...
     'redoc' => [
         'version' => 'v2.0.0-rc.53',
+        //...
+    ],
+    //...
+];
+```
+
+### Grouping Tags
+![redoc-only](https://img.shields.io/badge/Redoc%20Only-red.svg)
+
+If you are using Redoc you are able to group your tags by using the config.
+In the example below a group called "User Management" is created containing the tags "Users", "Admin" and "API keys".
+
+> Tags that are not grouped by you will be added under a default group, <br>
+  the name of which can be changed using the config (`swagger.redoc.default-group`)
+
+```php
+return [
+    //...
+    'redoc' => [
+        //...
+        'default-group' => null,
+        'tag-groups' => [
+            [
+                'name' => 'User Management',
+                'tags' => [ 'Users', 'Admin', 'API keys' ],
+            ],
+        ],
     ],
     //...
 ];

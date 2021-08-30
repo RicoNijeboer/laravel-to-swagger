@@ -6,6 +6,7 @@ use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Database\Eloquent\Factories\Sequence;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use Laravel\Passport\Http\Middleware\CheckForAnyScope;
 use Laravel\Passport\Http\Middleware\CheckScopes;
@@ -15,7 +16,6 @@ use RicoNijeboer\Swagger\Exceptions\MalformedServersException;
 use RicoNijeboer\Swagger\Models\Batch;
 use RicoNijeboer\Swagger\Models\Entry;
 use RicoNijeboer\Swagger\Models\Tag;
-use RicoNijeboer\Swagger\Support\RuleHelper;
 use RicoNijeboer\Swagger\Tests\TestCase;
 
 class BuildOpenApiConfigActionTest extends TestCase
@@ -417,6 +417,98 @@ class BuildOpenApiConfigActionTest extends TestCase
                 'paths./products.get.parameters.2.required'      => false,
                 'paths./products.get.parameters.2.schema.type'   => 'string',
                 'paths./products.get.parameters.2.schema.format' => '\d+\_[a-z]+',
+            ],
+            $result
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_adds_all_non_grouped_tags_to_a_default_group_which_is_named_by_the_config()
+    {
+        $tag1 = Tag::factory()->create(['tag' => 'Test']);
+        $tag2 = Tag::factory()->create(['tag' => 'Users']);
+        $batch = Batch::factory(['route_uri' => 'products', 'route_method' => 'GET', 'response_code' => 204])
+            ->has(Entry::factory()->validation())
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters([
+                'limit'  => [
+                    'class'    => null,
+                    'type'     => 'number',
+                    'required' => true,
+                    'inQuery'  => true,
+                    'rules'    => ['required', 'numeric'],
+                ],
+                'with'   => [
+                    'class'    => null,
+                    'type'     => 'array',
+                    'required' => false,
+                    'inQuery'  => true,
+                    'rules'    => ['nullable', 'array'],
+                ],
+                'search' => [
+                    'class'    => null,
+                    'type'     => 'string',
+                    'required' => false,
+                    'inQuery'  => true,
+                    'rules'    => ['nullable', 'string', 'regex:/\d+\_[a-z]+/'],
+                ],
+            ]))
+            ->create();
+
+        $batch->tags()->attach($tag1->id);
+        $batch->save();
+        $batch2 = Batch::factory(['route_uri' => 'products', 'route_method' => 'POST', 'response_code' => 200])
+            ->has(Entry::factory()->validation())
+            ->has(Entry::factory()->response())
+            ->has(Entry::factory()->parameters([
+                'limit'  => [
+                    'class'    => null,
+                    'type'     => 'number',
+                    'required' => true,
+                    'inQuery'  => true,
+                    'rules'    => ['required', 'numeric'],
+                ],
+                'with'   => [
+                    'class'    => null,
+                    'type'     => 'array',
+                    'required' => false,
+                    'inQuery'  => true,
+                    'rules'    => ['nullable', 'array'],
+                ],
+                'search' => [
+                    'class'    => null,
+                    'type'     => 'string',
+                    'required' => false,
+                    'inQuery'  => true,
+                    'rules'    => ['nullable', 'string', 'regex:/\d+\_[a-z]+/'],
+                ],
+            ]))
+            ->create();
+
+        $batch2->tags()->attach($tag2->id);
+        $batch2->save();
+
+        Config::set('swagger.redoc.default-group', 'default group');
+        Config::set('swagger.redoc.tag-groups', [
+            [
+                'name' => 'user mana',
+                'tags' => ['Users'],
+            ],
+        ]);
+
+        /** @var BuildOpenApiConfigAction $action */
+        $action = resolve(BuildOpenApiConfigAction::class);
+
+        $result = $action->build();
+
+        $this->assertArrayHasKeys(
+            [
+                'x-tagGroups.0.name' => 'default group',
+                'x-tagGroups.0.tags.0' => 'Test',
+                'x-tagGroups.1.name' => 'user mana',
+                'x-tagGroups.1.tags.0' => 'Users',
             ],
             $result
         );

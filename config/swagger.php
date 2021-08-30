@@ -40,5 +40,25 @@ return [
          * Which version of Redoc to use.
          */
         'version' => 'v2.0.0-rc.53',
+
+        /*
+         * When you group tags a default group will be created containing all tags that have not been grouped.
+         * You can overwrite it's name here.
+         *      https://github.com/RicoNijeboer/laravel-to-swagger#grouping-tags
+         */
+        'default-group' => null,
+
+        /*
+         * Groups of tags you want to be applied.
+         *      https://github.com/RicoNijeboer/laravel-to-swagger#grouping-tags
+         */
+        'tag-groups' => [
+            /*
+            [
+                'name' => 'User Management',
+                'tags' => [ 'Users', 'Admin', 'API keys' ],
+            ],
+            */
+        ],
     ],
 ];

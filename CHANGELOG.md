@@ -2,6 +2,14 @@
 
 All notable changes will be documented here.
 
+## v2.4.1 - 30-08-2021
+
+**Changes**
+
+- ![redoc-only](https://img.shields.io/badge/Redoc%20Only-red.svg) We now support grouping tags
+  - [Documentation can be found here](https://github.com/RicoNijeboer/laravel-to-swagger#grouping-tags)
+  - https://github.com/RicoNijeboer/laravel-to-swagger/issues/16
+
 ## v2.4.0 - 30-08-2021
 
 **Changes**
