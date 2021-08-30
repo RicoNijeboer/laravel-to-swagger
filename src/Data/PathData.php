@@ -260,8 +260,12 @@ class PathData
 
         $this->security = $authenticateMiddlewares
             ->map(function (string $middleware) use ($middlewareOfInstance) {
-                $parameters = explode(':', $middleware, 2)[1];
-                $parameters = explode(',', $parameters);
+                $parameters = explode(':', $middleware, 2)[1] ?? '';
+                $parameters = array_filter(explode(',', $parameters));
+
+                if (empty($parameters)) {
+                    $parameters[] = config('auth.defaults.guard');
+                }
 
                 return collect($parameters)
                     ->map(function (string $parameter) use ($middlewareOfInstance) {

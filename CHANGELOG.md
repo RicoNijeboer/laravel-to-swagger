@@ -13,6 +13,7 @@ All notable changes will be documented here.
 
 - Fixed an error that occurred when displaying any request that contained a `max` rule in the request validation
   - https://github.com/RicoNijeboer/laravel-to-swagger/issues/23
+- Fixed a bug in the PathData::calculateMiddleware where it threw an exception when you did not add a specific guard to your `auth` middleware.
 
 ## v2.3.3 - 2021-08-24
 
