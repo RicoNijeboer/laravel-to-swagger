@@ -164,9 +164,7 @@ class BuildOpenApiConfigAction
 
         if ($pathData->response['code'] !== Response::HTTP_NO_CONTENT) {
             $batchConfig['responses'][$pathData->response['code']]['content'] = [
-                $pathData->response['contentType'] => [
-                    'schema' => $pathData->response['schema'],
-                ],
+                $pathData->response['contentType'] => $pathData->response,
             ];
         }
 

@@ -6,6 +6,7 @@ All notable changes will be documented here.
 
 **Changes**
 
+- We now actually apply the example to the response so it is now readable
 - The `RicoNijeboer\Swagger\SwaggerServiceProvider` now ensures that the `RicoNijeboer\Swagger\Providers\ValidationServiceProvider` is registered, making the documentation for development only installs correct again.
   - https://github.com/RicoNijeboer/laravel-to-swagger/issues/23
 
