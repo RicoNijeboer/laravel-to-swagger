@@ -1,6 +1,8 @@
 # Laravel to Swagger
 
-![Packagist Version](https://img.shields.io/packagist/v/riconijeboer/laravel-to-swagger)
+<a href="https://packagist.org/packages/riconijeboer/laravel-to-swagger" target="_blank" title="Packagist version">
+    <img src="https://img.shields.io/packagist/v/riconijeboer/laravel-to-swagger" alt="Packagist version">
+</a>
 ![Packagist Downloads](https://img.shields.io/packagist/dm/riconijeboer/laravel-to-swagger)
 
 This package aims to bring the easiest path to creating a Swagger / OpenApi 3 config for your Laravel API's.
