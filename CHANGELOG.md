@@ -2,6 +2,12 @@
 
 All notable changes will be documented here.
 
+## v2.4.3 - 31-08-2021
+
+**Bugfixes**
+
+- Fixed a bug with rules that validated objects, where it just completely messed up
+
 ## v2.4.2 - 30-08-2021
 
 **Changes**

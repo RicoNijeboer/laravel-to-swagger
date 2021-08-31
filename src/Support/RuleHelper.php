@@ -246,7 +246,7 @@ class RuleHelper
 
         return [
             'type'       => 'object',
-            'properties' => collect($rules)
+            'properties' => collect(array_filter($rules, fn ($key) => !is_int($key), ARRAY_FILTER_USE_KEY))
                 ->map(fn (array $r, string $key) => static::openApiProperty($key, $r, $ruleCache))
                 ->toArray(),
         ];
